@@ -556,7 +556,7 @@ def main() -> None:
         print(f"ERROR: Directory not found: {project_path}", file=sys.stderr)
         sys.exit(1)
 
-    project_name = project_path.name
+    project_name = project_path.parent.name
     skip_dirs = DEFAULT_SKIP_DIRS | {s.lower() for s in (args.skip or [])}
 
     file_records = scan_project(project_path, skip_dirs)
