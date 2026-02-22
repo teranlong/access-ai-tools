@@ -2,9 +2,9 @@
 docx_to_md.py — Convert .docx/.doc to Markdown using mammoth + markdownify.
 
 Optimized for:
-1. Accurate Bullet Hierarchy (Fixes double bullets and indentation)
+1. Accurate Bullet Hierarchy
 2. Mojibake cleanup (UTF-8 encoding issues)
-3. Clean image embedding with relative paths
+3. Clean image embedding with URL-encoded relative paths
 4. Removing conversion bloat (warnings, redundant logs)
 """
 
@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import zipfile
 import re
+import urllib.parse
 from pathlib import Path
 
 from .base import ConversionResult, make_output_path, make_output_dir
@@ -42,17 +43,17 @@ def convert(
     
     # Sidecar directory for images
     images_dir_name = f"{source.name}_images"
+    # URL encode the dir name to handle spaces in Markdown paths
+    encoded_images_dir_name = urllib.parse.quote(images_dir_name)
     images_dir = make_output_dir(source, output_root, project_root) / images_dir_name
 
     # --- Convert HTML → Markdown -------------------------------------------
     try:
-        # Style map improvements:
-        # We REMOVE the explicit 'li' mapping for 'List Paragraph'.
-        # Mammoth is better at detecting lists using internal docx properties.
-        # We only map specific character styles we want to preserve.
+        # Standard style mapping for lists
         style_map = """
-        r[style-name='Strong'] => b
-        r[style-name='Emphasis'] => i
+        p[style-name='List Paragraph'] => li
+        p[style-name='List Bullet'] => li
+        p[style-name='List Number'] => li
         """
 
         image_counter = 0
@@ -72,7 +73,8 @@ def convert(
                 img_dest.write_bytes(img_f.read())
             
             extracted_images.append(img_filename)
-            return {"src": f"{images_dir_name}/{img_filename}"}
+            # Use URL-encoded relative path for the HTML src
+            return {"src": f"{encoded_images_dir_name}/{img_filename}"}
 
         with source.open("rb") as f:
             result = mammoth.convert_to_html(
@@ -85,12 +87,9 @@ def convert(
         messages = result.messages
 
         if messages:
-            warnings_text = "\n".join(
-                f"- [{m.type}] {m.message}" for m in messages
-            )
+            warnings_text = "\n".join(f"- [{m.type}] {m.message}" for m in messages)
 
-        # Convert to Markdown
-        # Use wrap=False to prevent artificial line breaks
+        # Convert HTML to MD
         markdown = md(
             html, 
             heading_style="ATX", 
@@ -100,13 +99,16 @@ def convert(
         )
 
     except Exception as exc:
-        err_str = str(exc)
-        out_path.write_text(f"# Conversion Error: {source.name}\n\n**Error:** `{err_str}`\n", encoding="utf-8")
-        return ConversionResult(success=False, output_files=[out_path], action="error", error=err_str)
+        return ConversionResult(
+            success=False,
+            output_files=[out_path],
+            action="error",
+            error=str(exc)
+        )
 
-    # --- Post-process results -----------------------------------------------
+    # --- Post-process -------------------------------------------------------
     
-    # 1. Fix Image Paths (EMF to PNG)
+    # 1. Vector Formats fixup (already using encoded path in markdown)
     for img_filename in list(extracted_images):
         img_path = images_dir / img_filename
         if img_path.suffix.lower() in (".emf", ".wmf"):
@@ -117,7 +119,8 @@ def convert(
                     im.load(dpi=150)
                     im.save(str(png_dest))
                 img_path.unlink()
-                markdown = markdown.replace(f"{images_dir_name}/{img_filename}", f"{images_dir_name}/{png_dest.name}")
+                # Replace both the old extension and ensure the path is encoded
+                markdown = markdown.replace(f"{encoded_images_dir_name}/{img_filename}", f"{encoded_images_dir_name}/{png_dest.name}")
                 output_files.append(png_dest)
             except Exception:
                 output_files.append(img_path)
@@ -125,8 +128,7 @@ def convert(
             output_files.append(img_path)
 
     # 2. MOJIBAKE CLEANUP
-    # Standard replacement for common double-encoded UTF-8 sequences
-    text_replacements = {
+    mojibake_map = {
         "â€“": "–",
         "â€”": "—",
         "â€™": "'",
@@ -135,27 +137,25 @@ def convert(
         "Â ": " ",
         "â€¢": "•",
         "â€¦": "...",
+        "\u00e2\u20ac\u201c": "–",
+        "\u00e2\u20ac\u201d": "—",
+        "\u00e2\u20ac\u2122": "'",
     }
-    for old, new in text_replacements.items():
+    for old, new in mojibake_map.items():
         markdown = markdown.replace(old, new)
 
-    # 3. FIX DOUBLE BULLETS AND LIST MERGING
-    # RCA: Catch '- - ' patterns and convert to indented bullets
-    # Pattern: Line start, followed by '- - '
+    # 3. Double Bullet / List merging fixes
     markdown = re.sub(r'^(\s*)-\s+- ', r'\1  - ', markdown, flags=re.MULTILINE)
-    
-    # RCA: Ensure spacing between text and following lists to prevent "smushed" text
-    # Look for alphanumeric character immediately followed by a bullet line
     markdown = re.sub(r'([a-zA-Z0-9:])\n-', r'\1\n\n-', markdown)
 
-    # 4. Clean up Image Bloat
-    markdown = re.sub(r'!\[A (screenshot|picture|white|close-up|table).*?Description automatically generated\]', '![image]', markdown)
-    markdown = re.sub(r'\n\s*!\[', '\n![', markdown)
+    # 4. Clean alt-text bloat (Updated for newer Word patterns)
+    # This also collapses internal newlines that were causing the "A screenshot of a project" gap
+    markdown = re.sub(r'!\[A (screenshot|picture|white|close-up|table).*?(Description automatically generated|AI-generated content may be incorrect).*?\]', '![image]', markdown, flags=re.DOTALL)
 
     # 5. Final Formatting cleanup
     markdown = re.sub(r'\n{3,}', '\n\n', markdown).strip()
 
-    # --- Output --------------------------------------------------------------
+    # --- Output -------------------------------------------------------------
     header = f"# {source.name}\n\n"
     if context == "visual" and extracted_images:
         header += f"*(Visual mode: {len(extracted_images)} images embedded)*\n\n"
