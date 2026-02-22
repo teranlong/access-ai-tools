@@ -119,6 +119,35 @@ def _convert_vector_images(
     return markdown, final_paths
 
 
+def _swap_imgs_for_placeholders(
+    html_content: str, encoded_images_dir: str
+) -> tuple[str, dict[str, str]]:
+    """Replace every <img> in the HTML with a text placeholder token.
+
+    markdownify silently drops <img> tags that appear inside table cells when
+    converting <table> to pipe-table syntax.  By swapping them to plain text
+    tokens first, the tokens survive the table conversion and can be replaced
+    back with proper markdown image references afterwards.
+
+    Returns (html_with_placeholders, {token: markdown_image_ref}).
+    """
+    token_map: dict[str, str] = {}
+
+    def replace_img(m: re.Match) -> str:
+        src_match = re.search(r'src=["\']([^"\']+)["\']', m.group(0))
+        if not src_match:
+            return m.group(0)
+        src = src_match.group(1)
+        filename = urllib.parse.quote(Path(src.replace("\\", "/")).name)
+        ref = f"![image]({encoded_images_dir}/{filename})"
+        token = f"IMGTOKEN{len(token_map)}END"
+        token_map[token] = ref
+        return token
+
+    return re.sub(r'<img[^>]+>', replace_img, html_content), token_map
+
+
+
 def convert(
     source: Path,
     output_root: Path,
@@ -149,6 +178,22 @@ def convert(
             html_content = pypandoc.convert_file(
                 str(source), 'html', format='docx', extra_args=extra_args
             )
+
+            # Move images before markdownify so we know final filenames.
+            pandoc_media_dir = temp_extract_dir / "media"
+            if pandoc_media_dir.exists():
+                for img_file in pandoc_media_dir.iterdir():
+                    if img_file.is_file():
+                        dest = images_dir / img_file.name
+                        shutil.move(str(img_file), str(dest))
+                        output_files.append(dest)
+
+            # Swap <img> tags for plain-text tokens before markdownify so they
+            # survive pipe-table cell conversion (markdownify silently drops <img>
+            # inside <td>).  Tokens are replaced with proper image refs afterwards.
+            html_content, img_tokens = _swap_imgs_for_placeholders(
+                html_content, encoded_images_dir_name
+            )
             markdown = md(
                 html_content,
                 heading_style="ATX",
@@ -156,19 +201,21 @@ def convert(
                 strip=['script', 'style', 'br'],
                 tables=True,
             )
+            for token, ref in img_tokens.items():
+                markdown = markdown.replace(token, ref)
         else:
             markdown = pypandoc.convert_file(
                 str(source), 'gfm', format='docx', extra_args=extra_args
             )
 
-        # Move extracted media to the permanent sidecar directory
-        pandoc_media_dir = temp_extract_dir / "media"
-        if pandoc_media_dir.exists():
-            for img_file in pandoc_media_dir.iterdir():
-                if img_file.is_file():
-                    dest = images_dir / img_file.name
-                    shutil.move(str(img_file), str(dest))
-                    output_files.append(dest)
+            # Move extracted media to the permanent sidecar directory
+            pandoc_media_dir = temp_extract_dir / "media"
+            if pandoc_media_dir.exists():
+                for img_file in pandoc_media_dir.iterdir():
+                    if img_file.is_file():
+                        dest = images_dir / img_file.name
+                        shutil.move(str(img_file), str(dest))
+                        output_files.append(dest)
 
     except Exception as exc:
         return ConversionResult(
