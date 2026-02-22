@@ -32,7 +32,7 @@ from pathlib import Path
 # ---------------------------------------------------------------------------
 # Version — update here and the output path changes automatically
 # ---------------------------------------------------------------------------
-VERSION = "1.2.0"
+VERSION = "1.3.0"
 
 # ---------------------------------------------------------------------------
 # Locate the converters package (same directory as this script)
@@ -73,7 +73,11 @@ def scan_project(project_path: Path) -> list[dict]:
             data = json.load(f)
         records = data.get("files", data) if isinstance(data, dict) else data
         # Filter to files that actually exist in the project
-        return [r for r in records if (project_path / r["relative_path"]).exists()]
+        matched = [r for r in records if (project_path / r["relative_path"]).exists()]
+        if matched:
+            return matched
+        # Catalog paths don't match this project root — fall through to direct scan
+        print("  Catalog paths don't match project root — falling back to direct scan.")
 
     # Fall back to direct scan
     print("  No catalog found — scanning directly.")

@@ -20,7 +20,7 @@ from .base import (
 from . import (
     stub_unsupported,
     copy_native,
-    docx_to_md,
+    docx_to_md_pandoc_v2,
     xlsx_to_md,
     pdf_to_md,
     pdf_to_images,
@@ -35,18 +35,18 @@ from . import (
 # ---------------------------------------------------------------------------
 # Extensions that are already AI-readable — skip entirely
 # ---------------------------------------------------------------------------
-_NATIVE_SKIP: set[str] = {
+_NATIVE_SKIP: set[str] = {}
+
+# Extensions that need a verbatim copy (VBA source)
+_COPY_VERBATIM: set[str] = {
     ".svg", ".excalidraw", ".sql", ".json", ".xml", ".md", ".txt",
     ".csv", ".html", ".htm", ".css", ".js", ".ts", ".py",
     ".ps1", ".sh", ".bat", ".cmd",
     ".png", ".jpg", ".jpeg", ".bmp",  # vision-readable
-}
-
-# Extensions that need a verbatim copy (VBA source)
-_COPY_VERBATIM: set[str] = {".bas", ".cls"}
+    ".fig",   ".bas", ".cls"}
 
 # Extensions that get stubs
-_STUB_TYPES: set[str] = {".zip", ".fig", ".bacpac", ".pbix", ".mp4", ".mov", ".avi", ".xcf", ".vsd"}
+_STUB_TYPES: set[str] = {".zip", ".bacpac", ".pbix", ".mp4", ".mov", ".avi", ".xcf", ".vsd"}
 
 
 # ---------------------------------------------------------------------------
@@ -90,7 +90,11 @@ def dispatch(
 
     # DOCX / DOC
     if ext in (".docx", ".doc"):
-        result = docx_to_md.convert(source, output_root, project_root, context=context)
+        # prefer_pipe_tables=True: HTML→markdownify path produces clean pipe tables
+        # instead of pandoc's GFM fallback which emits raw HTML for complex/styled tables
+        result = docx_to_md_pandoc_v2.convert(
+            source, output_root, project_root, context=context, prefer_pipe_tables=True
+        )
         result.context_decision = reason
         return result
 
@@ -113,14 +117,14 @@ def dispatch(
     if ext in (".pptx", ".ppt"):
         return pptx_to_md.convert(source, output_root, project_root)
 
+    # ACCDB / MDB
+    if ext in (".accdb", ".mdb"):
+        return accdb_schema.convert(source, output_root, project_root)
+
     # VSDX
     if ext == ".vsdx":
         result = _dispatch_vsdx(source, output_root, project_root, context, reason)
         return result
-
-    # ACCDB / MDB
-    if ext in (".accdb", ".mdb"):
-        return accdb_schema.convert(source, output_root, project_root)
 
     # --- Fallback: stub any truly unknown types ------------------------------
     return stub_unsupported.convert(source, output_root, project_root)
