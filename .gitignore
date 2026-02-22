@@ -4,6 +4,7 @@
 SampleProjects/
 AccessDbExamples/
 Testing/
+*temp*/
 
 # =========================================================
 # GENERATED OUTPUTS  (never commit)
