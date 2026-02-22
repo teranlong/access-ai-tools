@@ -6,6 +6,7 @@
 mammoth>=1.8.0           # docx → html (best fidelity Word conversion)
 markdownify>=0.13.0      # html → clean markdown
 python-pptx>=1.0.0       # pptx/ppt slide text extraction
+pypandoc>=1.13           # docx → markdown (alternative via pandoc)
 
 # Spreadsheet
 openpyxl>=3.1.0          # .xlsx (modern Excel)

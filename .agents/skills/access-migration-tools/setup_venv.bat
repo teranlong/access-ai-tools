@@ -46,6 +46,10 @@ call "%VENV_DIR%\Scripts\activate.bat"
 python -m pip install --upgrade pip --quiet
 pip install -r "%~dp0requirements.txt"
 
+echo.
+echo  Installing Pandoc binary...
+python -c "import pypandoc; pypandoc.download_pandoc()"
+
 if errorlevel 1 (
     echo.
     echo  ERROR: pip install failed. Check requirements.txt and your network.

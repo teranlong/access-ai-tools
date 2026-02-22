@@ -1,1 +1,0 @@
-[ ] exclude the jstreet header from files (i noticed it in all word docs but it could be in other places). review for other similar images that are not relavant to the content of the file.
