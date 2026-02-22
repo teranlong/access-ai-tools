@@ -17,7 +17,7 @@ If the user has not provided a project folder path, ask for it before proceeding
 Check that the venv exists and dependencies are installed:
 
 ```bash
-python -c "import mammoth; print('venv OK')" 2>nul || echo "venv NOT ready"
+python -c "import pypandoc; print('venv OK')" 2>nul || echo "venv NOT ready"
 ```
 
 If the venv is not ready, set it up first:
