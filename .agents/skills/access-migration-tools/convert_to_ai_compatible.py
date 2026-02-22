@@ -32,7 +32,7 @@ from pathlib import Path
 # ---------------------------------------------------------------------------
 # Version — update here and the output path changes automatically
 # ---------------------------------------------------------------------------
-VERSION = "1.1.0"
+VERSION = "1.2.0"
 
 # ---------------------------------------------------------------------------
 # Locate the converters package (same directory as this script)
