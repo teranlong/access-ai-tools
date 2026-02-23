@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Document Feedback</title>
 <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;1,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -105,6 +106,7 @@ body {
   padding: 36px 32px;
   display: flex;
   justify-content: center;
+  align-items: flex-start;
 }
 
 #doc-wrapper {
@@ -114,6 +116,7 @@ body {
   padding: 52px 60px;
   max-width: 700px;
   width: 100%;
+  min-height: 100%;
   position: relative;
 }
 
@@ -316,9 +319,9 @@ mark.ann-custom       { background: rgba(100,100,100,0.1); border-bottom: 2px so
   border: 1px solid var(--border);
   border-radius: 12px;
   box-shadow: var(--shadow-lg);
-  padding: 14px 14px 12px;
+  padding: 16px 16px 14px;
   z-index: 1000;
-  width: 294px;
+  width: 360px;
   display: none;
 }
 #popover.show {
@@ -345,15 +348,13 @@ mark.ann-custom       { background: rgba(100,100,100,0.1); border-bottom: 2px so
   font-style: italic;
   color: #666;
   background: var(--bg);
-  padding: 5px 9px;
+  padding: 6px 10px;
   border-radius: 4px;
   border-left: 3px solid var(--border);
   margin-bottom: 10px;
-  overflow: hidden;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  line-height: 1.5;
+  max-height: 7em;
+  overflow-y: auto;
+  line-height: 1.55;
 }
 
 #quick-btns {
@@ -489,6 +490,43 @@ mark.ann-custom       { background: rgba(100,100,100,0.1); border-bottom: 2px so
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: #CEC8BF; border-radius: 99px; }
 ::-webkit-scrollbar-thumb:hover { background: #B5AFA7; }
+
+/* ─── MD toggle ───────────────────────────────────────────────── */
+.tb-toggle {
+  border-radius: 99px;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.tb-toggle.active {
+  background: var(--text);
+  color: white;
+  border-color: var(--text);
+}
+
+/* ─── MD rendered styles ──────────────────────────────────────── */
+#doc-content.md-mode ul, #doc-content.md-mode ol { padding-left: 1.6em; margin-bottom: 1.1em; }
+#doc-content.md-mode li { margin-bottom: 0.35em; line-height: 1.75; }
+#doc-content.md-mode strong { font-weight: 700; }
+#doc-content.md-mode em { font-style: italic; }
+#doc-content.md-mode code { font-family: monospace; font-size: 0.88em; background: #F0EDE8; padding: 1px 5px; border-radius: 3px; }
+#doc-content.md-mode blockquote { border-left: 3px solid var(--border); padding-left: 1em; color: var(--text-muted); margin: 1em 0; font-style: italic; }
+#doc-content.md-mode hr { border: none; border-top: 1px solid var(--border); margin: 1.5em 0; }
+
+/* ─── Glow overlay ────────────────────────────────────────────── */
+#glow-overlay {
+  position: fixed;
+  pointer-events: none;
+  z-index: 500;
+  border-radius: 10px;
+  border: 2px solid rgba(59,130,246,0.55);
+  box-shadow: 0 0 0 5px rgba(59,130,246,0.12), 0 0 20px rgba(59,130,246,0.2);
+  animation: glowPulse 1.8s ease-in-out infinite;
+  display: none;
+  transition: left 0.1s, top 0.1s, width 0.1s, height 0.1s;
+}
+@keyframes glowPulse {
+  0%,100% { box-shadow: 0 0 0 4px rgba(59,130,246,0.12), 0 0 12px rgba(59,130,246,0.15); }
+  50%      { box-shadow: 0 0 0 8px rgba(59,130,246,0.22), 0 0 28px rgba(59,130,246,0.28); }
+}
 </style>
 </head>
 <body>
@@ -496,9 +534,11 @@ mark.ann-custom       { background: rgba(100,100,100,0.1); border-bottom: 2px so
 <!-- Toolbar -->
 <div id="toolbar">
   <h1>Document Feedback</h1>
-  <span id="toolbar-hint">Select any text to annotate</span>
+  <span id="toolbar-hint">Click to select · drag for range</span>
+  <button class="tb-btn tb-toggle" id="btn-md">MD Preview</button>
   <button class="tb-btn" id="btn-load">Load Document</button>
-  <button class="tb-btn" id="btn-export">Export JSON</button>
+  <button class="tb-btn" id="btn-copy">Copy Feedback</button>
+  <button class="tb-btn" id="btn-export">Download Feedback</button>
   <button class="tb-btn danger" id="btn-clear">Clear All</button>
 </div>
 
@@ -544,6 +584,8 @@ mark.ann-custom       { background: rgba(100,100,100,0.1); border-bottom: 2px so
     <button id="pop-submit">Add</button>
   </div>
 </div>
+
+<div id="glow-overlay"></div>
 
 <!-- Load Document Modal -->
 <div id="load-modal">
@@ -599,6 +641,7 @@ let docText      = SAMPLE;
 let annotations  = [];
 let pending      = null;   // { start, end, text }
 let uidSeed      = 0;
+let mdMode       = false;
 
 const TYPES = {
   detail:      { label: 'More Detail',   badge: 'fbadge-detail',      mark: 'ann-detail' },
@@ -676,17 +719,51 @@ function buildSegHtml(segStart, segEnd) {
   return html;
 }
 
+// ─── MD annotation injection (TreeWalker-based) ───────────────────────────────
+function wrapTextInDOM(root, searchText, className, annId) {
+  if (!searchText) return;
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+  const nodes = [];
+  let n;
+  while ((n = walker.nextNode())) nodes.push(n);
+
+  for (const node of nodes) {
+    const idx = node.textContent.indexOf(searchText);
+    if (idx < 0) continue;
+    const range = document.createRange();
+    range.setStart(node, idx);
+    range.setEnd(node, idx + searchText.length);
+    const mark = document.createElement('mark');
+    mark.className = className;
+    mark.dataset.ids = String(annId);
+    try { range.surroundContents(mark); } catch(e) { /* skip cross-node */ }
+    return; // mark first occurrence only
+  }
+}
+
 // ─── Render ───────────────────────────────────────────────────────────────────
 const docEl = document.getElementById('doc-content');
 
 function renderDoc() {
-  const paras = splitParagraphs(docText);
-  let html = '';
-  paras.forEach((p, i) => {
-    const tag = classifyPara(p.raw, i);
-    html += `<${tag}>${buildSegHtml(p.start, p.end)}</${tag}>`;
-  });
-  docEl.innerHTML = html;
+  if (mdMode) {
+    docEl.className = 'md-mode';
+    docEl.innerHTML = (typeof marked !== 'undefined')
+      ? marked.parse(docText)
+      : `<p>${esc(docText)}</p>`;
+    // Inject annotation marks into MD DOM
+    for (const ann of annotations) {
+      wrapTextInDOM(docEl, ann.text, `ann ${TYPES[ann.type].mark}`, ann.id);
+    }
+  } else {
+    docEl.className = '';
+    const paras = splitParagraphs(docText);
+    let html = '';
+    paras.forEach((p, i) => {
+      const tag = classifyPara(p.raw, i);
+      html += `<${tag}>${buildSegHtml(p.start, p.end)}</${tag}>`;
+    });
+    docEl.innerHTML = html;
+  }
 
   // Attach hover cross-highlight listeners
   docEl.querySelectorAll('mark.ann').forEach(m => {
@@ -747,60 +824,103 @@ function setMarkHighlight(ids, on) {
   });
 }
 
+// ─── Position mapping: rendered textContent pos → docText pos ────────────────
+// In plain-text mode, paragraphs are separated by \n\n in docText but nothing
+// in the DOM textContent. We build a segment map to convert accurately.
+function buildPosMap() {
+  const paras = splitParagraphs(docText);
+  const map = [];
+  let rPos = 0;
+  for (const p of paras) {
+    map.push({ dStart: p.start, dEnd: p.end, rStart: rPos, rEnd: rPos + p.raw.length });
+    rPos += p.raw.length;
+  }
+  return map;
+}
+
+function renderToDoc(rPos, map) {
+  for (const seg of map) {
+    if (rPos >= seg.rStart && rPos <= seg.rEnd) {
+      return seg.dStart + (rPos - seg.rStart);
+    }
+  }
+  // Beyond last segment — clamp to end
+  if (map.length) return map[map.length - 1].dEnd;
+  return rPos;
+}
+
 // ─── Selection → offsets ──────────────────────────────────────────────────────
 function getSelectionOffsets() {
   const sel = window.getSelection();
   if (!sel || sel.isCollapsed) return null;
-  const text = sel.toString();
-  if (!text.trim()) return null;
+  if (!sel.toString().trim()) return null;
 
   const range = sel.getRangeAt(0);
   if (!docEl.contains(range.commonAncestorContainer)) return null;
 
-  // Get rendered char offset
-  const preRange = document.createRange();
-  preRange.selectNodeContents(docEl);
-  preRange.setEnd(range.startContainer, range.startOffset);
-  const renderedPos = preRange.toString().length;
+  // Get start/end positions in rendered textContent
+  const base = document.createRange();
+  base.selectNodeContents(docEl);
 
-  // Estimate docText offset via ratio
-  const renderedLen = docEl.textContent.length;
-  const ratio       = renderedLen > 0 ? docText.length / renderedLen : 1;
-  const estPos      = Math.floor(renderedPos * ratio);
+  base.setEnd(range.startContainer, range.startOffset);
+  const rStart = base.toString().length;
 
-  // Search docText for the selected text near estimated position
-  const from = Math.max(0, estPos - 600);
-  let idx = docText.indexOf(text, from);
-  if (idx < 0) idx = docText.indexOf(text);
-  if (idx < 0) return null;
+  base.setEnd(range.endContainer, range.endOffset);
+  const rEnd = base.toString().length;
 
-  return { start: idx, end: idx + text.length, text };
+  if (rEnd <= rStart) return null;
+
+  if (mdMode) {
+    // In MD mode: use rendered text directly (no docText mapping needed)
+    const text = sel.toString();
+    if (!text.trim()) return null;
+    return { start: rStart, end: rEnd, text };
+  }
+
+  // Plain text: map through paragraph positions
+  const map = buildPosMap();
+  const dStart = renderToDoc(rStart, map);
+  const dEnd   = renderToDoc(rEnd,   map);
+  const text   = docText.slice(dStart, dEnd);
+  if (!text.trim()) return null;
+  return { start: dStart, end: dEnd, text };
 }
 
 // ─── Popover ──────────────────────────────────────────────────────────────────
 const popover = document.getElementById('popover');
 
 function showPopover(rect) {
-  document.getElementById('pop-preview').textContent = `"${trunc(pending.text, 80)}"`;
+  const previewLen = pending ? pending.text.length : 0;
+  const previewEl  = document.getElementById('pop-preview');
+  previewEl.textContent = pending ? `"${pending.text}"` : '';
   document.getElementById('pop-input').value = '';
+
+  // Show offscreen first to measure height
+  popover.style.left = '-9999px';
+  popover.style.top  = '-9999px';
   popover.classList.add('show');
 
-  const pw = 294, ph = popover.offsetHeight || 220;
-  const vw = window.innerWidth, vh = window.innerHeight;
+  requestAnimationFrame(() => {
+    const pw = 360;
+    const ph = popover.offsetHeight;
+    const vw = window.innerWidth, vh = window.innerHeight;
 
-  let left = rect.left + rect.width / 2 - pw / 2;
-  let top  = rect.bottom + 10;
-  if (left + pw > vw - 8) left = vw - pw - 8;
-  if (left < 8)            left = 8;
-  if (top + ph > vh - 8)   top  = rect.top - ph - 10;
+    let left = rect.left + rect.width / 2 - pw / 2;
+    let top  = rect.bottom + 10;
+    if (left + pw > vw - 8) left = vw - pw - 8;
+    if (left < 8)            left = 8;
+    if (top + ph > vh - 8)   top  = rect.top - ph - 10;
+    if (top < 8)             top  = 8;
 
-  popover.style.left = left + 'px';
-  popover.style.top  = top  + 'px';
+    popover.style.left = left + 'px';
+    popover.style.top  = top  + 'px';
+  });
 }
 
 function hidePopover() {
   popover.classList.remove('show');
   pending = null;
+  hideGlow();
 }
 
 // ─── Annotations CRUD ─────────────────────────────────────────────────────────
@@ -826,16 +946,127 @@ function removeAnnotation(id) {
   renderSidebar();
 }
 
+// ─── Glow overlay ─────────────────────────────────────────────────────────────
+const glowEl = document.getElementById('glow-overlay');
+
+function showGlow(el) {
+  const r = el.getBoundingClientRect();
+  glowEl.style.cssText = `
+    left: ${r.left - 10}px; top: ${r.top - 6}px;
+    width: ${r.width + 20}px; height: ${r.height + 12}px;
+    display: block;
+  `;
+}
+function hideGlow() { glowEl.style.display = 'none'; }
+
+// ─── Word-boundary selection at a point ───────────────────────────────────────
+function selectWordAt(x, y) {
+  let pos;
+  if (document.caretPositionFromPoint) {
+    pos = document.caretPositionFromPoint(x, y);
+    if (!pos) return false;
+    const range = document.createRange();
+    range.setStart(pos.offsetNode, pos.offset);
+    range.setEnd(pos.offsetNode, pos.offset);
+    range.expand('word');
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+  } else if (document.caretRangeFromPoint) {
+    const range = document.caretRangeFromPoint(x, y);
+    if (!range) return false;
+    range.expand('word');
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+  } else return false;
+  return true;
+}
+
+// ─── Click cycle state ────────────────────────────────────────────────────────
+let clickCycle    = { el: null, level: -1 };
+let mdPoint       = null;   // mousedown coords (only when inside docEl)
+let didDrag       = false;
+let suppressClick = false;
+
+function applyCycleSelection(el, level, x, y) {
+  const sel = window.getSelection();
+  sel.removeAllRanges();
+  hideGlow();
+
+  if (level === 0) {
+    selectWordAt(x, y);
+  } else if (level === 1) {
+    const range = document.createRange();
+    range.selectNodeContents(el);
+    sel.addRange(range);
+  } else {
+    const range = document.createRange();
+    range.selectNodeContents(el);
+    sel.addRange(range);
+    showGlow(el);
+  }
+}
+
 // ─── Events ───────────────────────────────────────────────────────────────────
 
-// Text selection in document
-docEl.addEventListener('mouseup', () => {
+docEl.addEventListener('mousedown', e => {
+  mdPoint  = { x: e.clientX, y: e.clientY };
+  didDrag  = false;
+  hideGlow();
+});
+
+document.addEventListener('mousemove', e => {
+  if (!mdPoint) return;
+  if (Math.hypot(e.clientX - mdPoint.x, e.clientY - mdPoint.y) > 6)
+    didDrag = true;
+});
+
+// document-level mouseup catches drag-end even when mouse leaves docEl
+document.addEventListener('mouseup', e => {
+  if (!mdPoint) return;          // drag didn't start inside docEl
+  const wasDrag = didDrag;
+  mdPoint  = null;
+  didDrag  = false;
+
+  if (!wasDrag) return;          // plain click — let click handler deal with it
+
+  // Suppress the upcoming click event (fires synchronously after mouseup)
+  suppressClick = true;
   setTimeout(() => {
+    suppressClick = false;
     const offsets = getSelectionOffsets();
     if (!offsets) { hidePopover(); return; }
     pending = offsets;
-    const range = window.getSelection().getRangeAt(0);
-    showPopover(range.getBoundingClientRect());
+    const sel = window.getSelection();
+    if (sel && sel.rangeCount)
+      showPopover(sel.getRangeAt(0).getBoundingClientRect());
+  }, 0);
+});
+
+docEl.addEventListener('click', e => {
+  if (suppressClick) return;     // drag-end — already handled above
+
+  const el = e.target.closest('p,h1,h2,h3,li');
+  if (!el) return;
+
+  hidePopover();
+
+  if (clickCycle.el === el) {
+    clickCycle.level = (clickCycle.level + 1) % 3;
+  } else {
+    clickCycle.el    = el;
+    clickCycle.level = 0;
+  }
+
+  applyCycleSelection(el, clickCycle.level, e.clientX, e.clientY);
+
+  setTimeout(() => {
+    const offsets = getSelectionOffsets();
+    if (!offsets) return;
+    pending = offsets;
+    const sel = window.getSelection();
+    if (sel && sel.rangeCount) showPopover(sel.getRangeAt(0).getBoundingClientRect());
   }, 0);
 });
 
@@ -867,19 +1098,31 @@ document.addEventListener('mousedown', e => {
   }
 });
 
+// Toolbar: MD toggle
+document.getElementById('btn-md').addEventListener('click', function() {
+  mdMode = !mdMode;
+  this.classList.toggle('active', mdMode);
+  annotations = [];
+  clickCycle = { el: null, level: -1 };
+  hideGlow();
+  renderDoc();
+  renderSidebar();
+});
+
 // Toolbar: Clear All
 document.getElementById('btn-clear').addEventListener('click', () => {
   if (!annotations.length) return;
   if (confirm('Remove all annotations?')) {
     annotations = [];
+    clickCycle  = { el: null, level: -1 };
+    hideGlow();
     renderDoc();
     renderSidebar();
   }
 });
 
-// Toolbar: Export JSON
-document.getElementById('btn-export').addEventListener('click', () => {
-  const data = annotations.map(a => ({
+function buildFeedbackJson() {
+  return annotations.map(a => ({
     id:           a.id,
     type:         a.type,
     label:        TYPES[a.type].label,
@@ -888,7 +1131,21 @@ document.getElementById('btn-export').addEventListener('click', () => {
     charStart:    a.start,
     charEnd:      a.end,
   }));
-  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+}
+
+// Toolbar: Copy Feedback
+document.getElementById('btn-copy').addEventListener('click', function() {
+  if (!annotations.length) { this.textContent = 'Nothing to copy'; setTimeout(() => this.textContent = 'Copy Feedback', 1500); return; }
+  const json = JSON.stringify(buildFeedbackJson(), null, 2);
+  navigator.clipboard.writeText(json).then(() => {
+    this.textContent = 'Copied!';
+    setTimeout(() => this.textContent = 'Copy Feedback', 1800);
+  });
+});
+
+// Toolbar: Download Feedback
+document.getElementById('btn-export').addEventListener('click', () => {
+  const blob = new Blob([JSON.stringify(buildFeedbackJson(), null, 2)], { type: 'application/json' });
   const url  = URL.createObjectURL(blob);
   const a    = Object.assign(document.createElement('a'), { href: url, download: 'feedback.json' });
   a.click();
