@@ -1,0 +1,924 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Document Feedback</title>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;1,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #F5F2ED;
+  --doc-bg: #FFFFFF;
+  --sidebar-bg: #EDEBE6;
+  --border: #E2DDD5;
+  --text: #1A1714;
+  --text-muted: #8A8178;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.07), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md: 0 4px 20px rgba(0,0,0,0.09), 0 2px 6px rgba(0,0,0,0.05);
+  --shadow-lg: 0 12px 40px rgba(0,0,0,0.14), 0 4px 12px rgba(0,0,0,0.07);
+
+  --c-detail:       #2563EB;
+  --c-remove:       #DC2626;
+  --c-important:    #B45309;
+  --c-unimportant:  #6B7280;
+  --c-shorter:      #059669;
+  --c-clarify:      #7C3AED;
+
+  --h-detail:       rgba(37,99,235,0.12);
+  --h-remove:       rgba(220,38,38,0.11);
+  --h-important:    rgba(180,83,9,0.16);
+  --h-unimportant:  rgba(107,114,128,0.10);
+  --h-shorter:      rgba(5,150,105,0.12);
+  --h-clarify:      rgba(124,58,237,0.12);
+}
+
+body {
+  font-family: 'DM Sans', system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* ─── Toolbar ─────────────────────────────────────────────────── */
+#toolbar {
+  background: #fff;
+  border-bottom: 1px solid var(--border);
+  height: 54px;
+  padding: 0 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+  box-shadow: var(--shadow-sm);
+  z-index: 10;
+}
+
+#toolbar h1 {
+  font-family: 'Lora', serif;
+  font-size: 1.1rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  margin-right: auto;
+}
+
+#toolbar-hint {
+  font-size: 0.76rem;
+  color: var(--text-muted);
+  border-right: 1px solid var(--border);
+  padding-right: 14px;
+  margin-right: 4px;
+  white-space: nowrap;
+}
+
+.tb-btn {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 500;
+  padding: 5px 13px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: white;
+  color: var(--text);
+  cursor: pointer;
+  transition: background 0.12s, border-color 0.12s;
+  white-space: nowrap;
+}
+.tb-btn:hover { background: var(--bg); border-color: #C8C1B8; }
+.tb-btn.danger:hover { background: #FFF1F1; border-color: #FCA5A5; color: var(--c-remove); }
+
+/* ─── Layout ──────────────────────────────────────────────────── */
+#main {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* ─── Document Panel ──────────────────────────────────────────── */
+#doc-panel {
+  flex: 1;
+  overflow-y: auto;
+  padding: 36px 32px;
+  display: flex;
+  justify-content: center;
+}
+
+#doc-wrapper {
+  background: var(--doc-bg);
+  box-shadow: var(--shadow-md);
+  border-radius: 3px;
+  padding: 52px 60px;
+  max-width: 700px;
+  width: 100%;
+  position: relative;
+}
+
+#doc-content {
+  font-family: 'Lora', serif;
+  font-size: 1rem;
+  line-height: 1.88;
+  color: var(--text);
+  user-select: text;
+  cursor: text;
+}
+#doc-content h1 {
+  font-size: 1.55rem;
+  font-weight: 600;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+  margin-bottom: 0.35em;
+  font-family: 'Lora', serif;
+}
+#doc-content h2 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-top: 1.9em;
+  margin-bottom: 0.45em;
+  letter-spacing: -0.01em;
+  font-family: 'Lora', serif;
+}
+#doc-content p { margin-bottom: 1.2em; }
+#doc-content p:last-child { margin-bottom: 0; }
+
+/* ─── Annotation Marks ────────────────────────────────────────── */
+mark.ann {
+  background: none;
+  border-radius: 2px;
+  cursor: pointer;
+  transition: filter 0.1s;
+}
+mark.ann:hover { filter: brightness(0.88); }
+mark.ann.ring { outline: 2px solid currentColor; outline-offset: 1px; }
+
+mark.ann-detail       { background: var(--h-detail);      border-bottom: 2px solid var(--c-detail);                    color: inherit; }
+mark.ann-remove       { background: var(--h-remove);       text-decoration: line-through; text-decoration-color: var(--c-remove); color: inherit; }
+mark.ann-important    { background: var(--h-important);    border-bottom: 2px solid var(--c-important);                 color: inherit; }
+mark.ann-unimportant  { background: var(--h-unimportant);  opacity: 0.6;                                                color: inherit; }
+mark.ann-shorter      { background: var(--h-shorter);      border-bottom: 2px dashed var(--c-shorter);                  color: inherit; }
+mark.ann-clarify      { background: var(--h-clarify);      border-bottom: 2px dotted var(--c-clarify);                  color: inherit; }
+mark.ann-custom       { background: rgba(100,100,100,0.1); border-bottom: 2px solid #888;                               color: inherit; }
+
+/* ─── Sidebar ─────────────────────────────────────────────────── */
+#sidebar {
+  width: 308px;
+  flex-shrink: 0;
+  background: var(--sidebar-bg);
+  border-left: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+#sidebar-head {
+  padding: 14px 18px 12px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+#sidebar-head h2 {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+#count-badge {
+  font-size: 0.72rem;
+  font-weight: 500;
+  background: var(--border);
+  color: var(--text-muted);
+  padding: 1px 8px;
+  border-radius: 99px;
+}
+
+#card-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+/* Empty state */
+#empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 48px 24px;
+  gap: 10px;
+  color: var(--text-muted);
+}
+#empty-state svg { opacity: 0.25; }
+#empty-state p { font-size: 0.82rem; line-height: 1.55; }
+
+/* Feedback cards */
+.fcard {
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 11px 13px;
+  cursor: default;
+  transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s;
+  animation: slideIn 0.18s ease;
+}
+@keyframes slideIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.fcard:hover {
+  transform: translateX(-2px);
+  box-shadow: var(--shadow-sm);
+  border-color: #D1CAC0;
+}
+.fcard.highlighted { box-shadow: 0 0 0 2px #888, var(--shadow-sm); }
+
+.fcard-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 7px;
+}
+
+.fbadge {
+  font-size: 0.64rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 99px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  flex-shrink: 0;
+}
+.fbadge-detail      { background: #DBEAFE; color: #1D4ED8; }
+.fbadge-remove      { background: #FEE2E2; color: #B91C1C; }
+.fbadge-important   { background: #FEF3C7; color: #92400E; }
+.fbadge-unimportant { background: #F3F4F6; color: #4B5563; }
+.fbadge-shorter     { background: #D1FAE5; color: #065F46; }
+.fbadge-clarify     { background: #EDE9FE; color: #5B21B6; }
+.fbadge-custom      { background: #F5F5F5; color: #444;    }
+
+.fdismiss {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: var(--text-muted);
+  font-size: 15px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  padding: 0;
+  transition: background 0.12s, color 0.12s;
+}
+.fdismiss:hover { background: #FEE2E2; color: var(--c-remove); }
+
+.fsnippet {
+  font-family: 'Lora', serif;
+  font-size: 0.78rem;
+  font-style: italic;
+  line-height: 1.5;
+  color: #555;
+  background: var(--bg);
+  padding: 5px 9px;
+  border-radius: 4px;
+  border-left: 3px solid var(--border);
+  margin-bottom: 5px;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.fnote {
+  font-size: 0.76rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+  font-style: italic;
+}
+
+/* ─── Popover ─────────────────────────────────────────────────── */
+#popover {
+  position: fixed;
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: var(--shadow-lg);
+  padding: 14px 14px 12px;
+  z-index: 1000;
+  width: 294px;
+  display: none;
+}
+#popover.show {
+  display: block;
+  animation: popIn 0.14s ease;
+}
+@keyframes popIn {
+  from { opacity: 0; transform: scale(0.94) translateY(-4px); }
+  to   { opacity: 1; transform: scale(1)    translateY(0); }
+}
+
+#pop-label {
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 9px;
+}
+
+#pop-preview {
+  font-family: 'Lora', serif;
+  font-size: 0.76rem;
+  font-style: italic;
+  color: #666;
+  background: var(--bg);
+  padding: 5px 9px;
+  border-radius: 4px;
+  border-left: 3px solid var(--border);
+  margin-bottom: 10px;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  line-height: 1.5;
+}
+
+#quick-btns {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-bottom: 10px;
+}
+
+.qbtn {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.73rem;
+  font-weight: 500;
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: 1.5px solid transparent;
+  cursor: pointer;
+  transition: filter 0.1s, transform 0.1s;
+}
+.qbtn:hover   { filter: brightness(0.9); transform: translateY(-1px); }
+.qbtn:active  { transform: translateY(0); }
+
+.qbtn-detail      { background: #DBEAFE; color: #1D4ED8; border-color: #BFDBFE; }
+.qbtn-remove      { background: #FEE2E2; color: #B91C1C; border-color: #FECACA; }
+.qbtn-important   { background: #FEF3C7; color: #92400E; border-color: #FDE68A; }
+.qbtn-unimportant { background: #F3F4F6; color: #4B5563; border-color: #E5E7EB; }
+.qbtn-shorter     { background: #D1FAE5; color: #065F46; border-color: #A7F3D0; }
+.qbtn-clarify     { background: #EDE9FE; color: #5B21B6; border-color: #DDD6FE; }
+
+#pop-divider { height: 1px; background: var(--border); margin-bottom: 10px; }
+
+#pop-custom-row {
+  display: flex;
+  gap: 7px;
+}
+#pop-input {
+  flex: 1;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.8rem;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--text);
+  outline: none;
+  transition: border-color 0.15s;
+}
+#pop-input:focus { border-color: #9CA3AF; background: white; }
+#pop-input::placeholder { color: #BDB5AB; }
+
+#pop-submit {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 6px 13px;
+  border-radius: 6px;
+  border: none;
+  background: var(--text);
+  color: white;
+  cursor: pointer;
+  transition: background 0.12s;
+  white-space: nowrap;
+}
+#pop-submit:hover { background: #374151; }
+
+/* ─── Load Modal ──────────────────────────────────────────────── */
+#load-modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.38);
+  z-index: 2000;
+  align-items: center;
+  justify-content: center;
+}
+#load-modal.show { display: flex; }
+
+#load-box {
+  background: white;
+  border-radius: 14px;
+  padding: 28px;
+  width: 540px;
+  max-width: 90vw;
+  box-shadow: var(--shadow-lg);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+#load-box h3 { font-size: 1rem; font-weight: 600; }
+#load-box p  { font-size: 0.82rem; color: var(--text-muted); margin-top: -6px; }
+
+#load-textarea {
+  font-family: 'Lora', serif;
+  font-size: 0.88rem;
+  line-height: 1.7;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  resize: vertical;
+  min-height: 210px;
+  outline: none;
+  color: var(--text);
+  transition: border-color 0.15s;
+}
+#load-textarea:focus { border-color: #9CA3AF; }
+
+#load-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 9px;
+}
+.modal-btn {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.83rem;
+  font-weight: 500;
+  padding: 8px 18px;
+  border-radius: 7px;
+  cursor: pointer;
+  transition: background 0.12s;
+  border: 1px solid var(--border);
+  background: white;
+}
+.modal-btn:hover { background: var(--bg); }
+.modal-btn.primary {
+  background: var(--text);
+  color: white;
+  border-color: var(--text);
+}
+.modal-btn.primary:hover { background: #374151; }
+
+/* ─── Scrollbars ──────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #CEC8BF; border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background: #B5AFA7; }
+</style>
+</head>
+<body>
+
+<!-- Toolbar -->
+<div id="toolbar">
+  <h1>Document Feedback</h1>
+  <span id="toolbar-hint">Select any text to annotate</span>
+  <button class="tb-btn" id="btn-load">Load Document</button>
+  <button class="tb-btn" id="btn-export">Export JSON</button>
+  <button class="tb-btn danger" id="btn-clear">Clear All</button>
+</div>
+
+<!-- Main -->
+<div id="main">
+  <div id="doc-panel">
+    <div id="doc-wrapper">
+      <div id="doc-content"></div>
+    </div>
+  </div>
+
+  <div id="sidebar">
+    <div id="sidebar-head">
+      <h2>Annotations</h2>
+      <span id="count-badge">0</span>
+    </div>
+    <div id="card-list">
+      <div id="empty-state">
+        <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+        </svg>
+        <p>Select text in the document,<br>then choose a feedback type.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Popover -->
+<div id="popover">
+  <div id="pop-label">Add Feedback</div>
+  <div id="pop-preview"></div>
+  <div id="quick-btns">
+    <button class="qbtn qbtn-detail"      data-type="detail">More Detail</button>
+    <button class="qbtn qbtn-remove"      data-type="remove">Remove</button>
+    <button class="qbtn qbtn-important"   data-type="important">Important</button>
+    <button class="qbtn qbtn-unimportant" data-type="unimportant">Not Important</button>
+    <button class="qbtn qbtn-shorter"     data-type="shorter">Make Shorter</button>
+    <button class="qbtn qbtn-clarify"     data-type="clarify">Clarify</button>
+  </div>
+  <div id="pop-divider"></div>
+  <div id="pop-custom-row">
+    <input id="pop-input" type="text" placeholder="Custom feedback…" autocomplete="off">
+    <button id="pop-submit">Add</button>
+  </div>
+</div>
+
+<!-- Load Document Modal -->
+<div id="load-modal">
+  <div id="load-box">
+    <h3>Load Document</h3>
+    <p>Paste your document text below. Existing annotations will be cleared.</p>
+    <textarea id="load-textarea" placeholder="Paste document content here…"></textarea>
+    <div id="load-actions">
+      <button class="modal-btn" id="load-cancel">Cancel</button>
+      <button class="modal-btn primary" id="load-confirm">Load</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── Sample document ──────────────────────────────────────────────────────────
+const SAMPLE = `Project Alpha: Q4 Product Roadmap
+
+Executive Summary
+
+This document outlines the strategic priorities and development roadmap for Project Alpha in Q4 2024. The primary objectives are to improve user engagement, expand market reach, and deliver key platform improvements that were deferred from Q3. All stakeholders should review this document and submit written feedback no later than October 1st.
+
+1. User Authentication Overhaul
+
+The current authentication system presents significant friction points resulting in approximately 23% drop-off during onboarding. We propose a complete redesign of the login and registration flows, incorporating social sign-on options (Google, GitHub, Apple), passwordless email magic links, and biometric authentication support for mobile platforms.
+
+The estimated timeline for this work is six weeks, requiring two senior engineers and one UX designer. Testing should begin in week four with a staged rollout to 5% of new users initially. All changes must be backward-compatible with existing session tokens to avoid forcing active users to re-authenticate.
+
+2. Performance Optimization Initiative
+
+Recent performance audits have identified several critical bottlenecks in our data pipeline. The average API response time has increased to 847ms — well above our 200ms target. Key areas for improvement include database query optimization (estimated 40% improvement), CDN configuration updates for static assets, and lazy loading implementation for dashboard components.
+
+This initiative should be treated as high priority given the direct correlation between load times and conversion rates observed in A/B testing last quarter. A 100ms improvement in load time corresponds to approximately 1.2% increase in completed onboarding flows, which translates to an estimated $180,000 increase in monthly recurring revenue at current conversion rates.
+
+3. Mobile Application Expansion
+
+We currently serve approximately 30,000 monthly active users through our web platform, with growing demand for a dedicated mobile experience. Market research indicates 67% of our users access the platform from mobile devices, yet our responsive web app scores poorly on mobile-specific usability metrics.
+
+A native iOS and Android application would require substantial investment: an estimated 8 months of development, a team of four engineers, and an initial budget of approximately $400,000. Alternatively, a cross-platform approach using React Native could reduce costs by 30–40% with some trade-offs in native performance and platform-specific UX consistency.
+
+4. Customer Support Integration
+
+Customer support tickets have increased 34% quarter-over-quarter, placing significant strain on our two-person support team. The majority fall into three categories: password resets (28%), billing questions (35%), and integration setup issues (37%).
+
+Implementing an AI-powered help center and chatbot could deflect an estimated 60% of common inquiries, reducing load on human agents and improving first-response time from the current 18 hours to under 5 minutes. We recommend evaluating three vendors: Intercom, Zendesk, and a custom LLM-based solution built on our existing infrastructure. A vendor decision must be made by October 31st to allow for Q4 implementation.
+
+Conclusion
+
+The initiatives outlined above represent a balanced approach to addressing immediate technical debt while investing in long-term growth opportunities. Prioritization should align with the company's primary goal of reaching 100,000 MAU by end of Q1 2025. Engineering capacity limits mean we can realistically execute on two of these four initiatives simultaneously; leadership alignment on priority order is required before sprint planning begins.`;
+
+// ─── State ────────────────────────────────────────────────────────────────────
+let docText      = SAMPLE;
+let annotations  = [];
+let pending      = null;   // { start, end, text }
+let uidSeed      = 0;
+
+const TYPES = {
+  detail:      { label: 'More Detail',   badge: 'fbadge-detail',      mark: 'ann-detail' },
+  remove:      { label: 'Remove',        badge: 'fbadge-remove',      mark: 'ann-remove' },
+  important:   { label: 'Important',     badge: 'fbadge-important',   mark: 'ann-important' },
+  unimportant: { label: 'Not Important', badge: 'fbadge-unimportant', mark: 'ann-unimportant' },
+  shorter:     { label: 'Make Shorter',  badge: 'fbadge-shorter',     mark: 'ann-shorter' },
+  clarify:     { label: 'Clarify',       badge: 'fbadge-clarify',     mark: 'ann-clarify' },
+  custom:      { label: 'Note',          badge: 'fbadge-custom',      mark: 'ann-custom' },
+};
+
+// ─── Utilities ────────────────────────────────────────────────────────────────
+function uid()   { return ++uidSeed; }
+function esc(s)  { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function trunc(s, n = 85) { return s.length > n ? s.slice(0, n).trimEnd() + '…' : s; }
+
+// ─── Document parsing ─────────────────────────────────────────────────────────
+function splitParagraphs(text) {
+  const result = [];
+  let pos = 0;
+  while (pos < text.length) {
+    // skip leading newlines
+    while (pos < text.length && text[pos] === '\n') pos++;
+    if (pos >= text.length) break;
+    // find end of paragraph (double newline or eof)
+    let end = pos;
+    while (end < text.length) {
+      if (text[end] === '\n' && end + 1 < text.length && text[end + 1] === '\n') break;
+      end++;
+    }
+    const raw = text.slice(pos, end);
+    if (raw.trim()) result.push({ raw, start: pos, end });
+    pos = end;
+  }
+  return result;
+}
+
+function classifyPara(raw, idx) {
+  const t = raw.trim();
+  // Heading: short, no trailing sentence punctuation
+  if (t.length < 75 && !/[.!?,;]$/.test(t)) {
+    return idx === 0 ? 'h1' : 'h2';
+  }
+  return 'p';
+}
+
+// ─── Annotated HTML builder ───────────────────────────────────────────────────
+function buildSegHtml(segStart, segEnd) {
+  const chunk = docText.slice(segStart, segEnd);
+  const relevant = annotations.filter(a => a.start < segEnd && a.end > segStart);
+  if (!relevant.length) return esc(chunk).replace(/\n/g, '<br>');
+
+  // Build boundary set, clamp to segment
+  const bounds = new Set([segStart, segEnd]);
+  for (const a of relevant) {
+    if (a.start > segStart) bounds.add(a.start);
+    if (a.end   < segEnd)   bounds.add(a.end);
+  }
+  const sorted = [...bounds].sort((a, b) => a - b);
+
+  let html = '';
+  for (let i = 0; i < sorted.length - 1; i++) {
+    const s = sorted[i], e = sorted[i + 1];
+    const seg = docText.slice(s, e);
+    const covering = relevant.filter(a => a.start <= s && a.end >= e);
+
+    if (!covering.length) {
+      html += esc(seg).replace(/\n/g, '<br>');
+    } else {
+      const top = covering[covering.length - 1];
+      const ids = covering.map(a => a.id).join(',');
+      html += `<mark class="ann ${TYPES[top.type].mark}" data-ids="${ids}">${esc(seg).replace(/\n/g, '<br>')}</mark>`;
+    }
+  }
+  return html;
+}
+
+// ─── Render ───────────────────────────────────────────────────────────────────
+const docEl = document.getElementById('doc-content');
+
+function renderDoc() {
+  const paras = splitParagraphs(docText);
+  let html = '';
+  paras.forEach((p, i) => {
+    const tag = classifyPara(p.raw, i);
+    html += `<${tag}>${buildSegHtml(p.start, p.end)}</${tag}>`;
+  });
+  docEl.innerHTML = html;
+
+  // Attach hover cross-highlight listeners
+  docEl.querySelectorAll('mark.ann').forEach(m => {
+    const ids = m.dataset.ids.split(',').map(Number);
+    m.addEventListener('mouseenter', () => setCardHighlight(ids, true));
+    m.addEventListener('mouseleave', () => setCardHighlight(ids, false));
+  });
+}
+
+function renderSidebar() {
+  const list  = document.getElementById('card-list');
+  const empty = document.getElementById('empty-state');
+  document.getElementById('count-badge').textContent = annotations.length;
+
+  list.innerHTML = '';
+  if (!annotations.length) {
+    list.appendChild(empty);
+    return;
+  }
+
+  // Newest on top
+  [...annotations].reverse().forEach(ann => list.appendChild(buildCard(ann)));
+}
+
+function buildCard(ann) {
+  const t   = TYPES[ann.type];
+  const div = document.createElement('div');
+  div.className   = 'fcard';
+  div.dataset.id  = ann.id;
+  div.innerHTML = `
+    <div class="fcard-top">
+      <span class="fbadge ${t.badge}">${t.label}</span>
+      <button class="fdismiss" data-id="${ann.id}" title="Remove">×</button>
+    </div>
+    <div class="fsnippet">"${esc(trunc(ann.text))}"</div>
+    ${ann.note ? `<div class="fnote">${esc(ann.note)}</div>` : ''}
+  `;
+  div.addEventListener('mouseenter', () => setMarkHighlight([ann.id], true));
+  div.addEventListener('mouseleave', () => setMarkHighlight([ann.id], false));
+  div.querySelector('.fdismiss').addEventListener('click', e => {
+    e.stopPropagation();
+    removeAnnotation(ann.id);
+  });
+  return div;
+}
+
+function setCardHighlight(ids, on) {
+  document.querySelectorAll('.fcard').forEach(c => {
+    if (ids.includes(Number(c.dataset.id)))
+      c.classList.toggle('highlighted', on);
+  });
+}
+function setMarkHighlight(ids, on) {
+  docEl.querySelectorAll('mark.ann').forEach(m => {
+    const mids = m.dataset.ids.split(',').map(Number);
+    if (ids.some(id => mids.includes(id)))
+      m.classList.toggle('ring', on);
+  });
+}
+
+// ─── Selection → offsets ──────────────────────────────────────────────────────
+function getSelectionOffsets() {
+  const sel = window.getSelection();
+  if (!sel || sel.isCollapsed) return null;
+  const text = sel.toString();
+  if (!text.trim()) return null;
+
+  const range = sel.getRangeAt(0);
+  if (!docEl.contains(range.commonAncestorContainer)) return null;
+
+  // Get rendered char offset
+  const preRange = document.createRange();
+  preRange.selectNodeContents(docEl);
+  preRange.setEnd(range.startContainer, range.startOffset);
+  const renderedPos = preRange.toString().length;
+
+  // Estimate docText offset via ratio
+  const renderedLen = docEl.textContent.length;
+  const ratio       = renderedLen > 0 ? docText.length / renderedLen : 1;
+  const estPos      = Math.floor(renderedPos * ratio);
+
+  // Search docText for the selected text near estimated position
+  const from = Math.max(0, estPos - 600);
+  let idx = docText.indexOf(text, from);
+  if (idx < 0) idx = docText.indexOf(text);
+  if (idx < 0) return null;
+
+  return { start: idx, end: idx + text.length, text };
+}
+
+// ─── Popover ──────────────────────────────────────────────────────────────────
+const popover = document.getElementById('popover');
+
+function showPopover(rect) {
+  document.getElementById('pop-preview').textContent = `"${trunc(pending.text, 80)}"`;
+  document.getElementById('pop-input').value = '';
+  popover.classList.add('show');
+
+  const pw = 294, ph = popover.offsetHeight || 220;
+  const vw = window.innerWidth, vh = window.innerHeight;
+
+  let left = rect.left + rect.width / 2 - pw / 2;
+  let top  = rect.bottom + 10;
+  if (left + pw > vw - 8) left = vw - pw - 8;
+  if (left < 8)            left = 8;
+  if (top + ph > vh - 8)   top  = rect.top - ph - 10;
+
+  popover.style.left = left + 'px';
+  popover.style.top  = top  + 'px';
+}
+
+function hidePopover() {
+  popover.classList.remove('show');
+  pending = null;
+}
+
+// ─── Annotations CRUD ─────────────────────────────────────────────────────────
+function addAnnotation(type, note = '') {
+  if (!pending) return;
+  annotations.push({
+    id:    uid(),
+    start: pending.start,
+    end:   pending.end,
+    text:  pending.text,
+    type,
+    note,
+  });
+  hidePopover();
+  window.getSelection()?.removeAllRanges();
+  renderDoc();
+  renderSidebar();
+}
+
+function removeAnnotation(id) {
+  annotations = annotations.filter(a => a.id !== id);
+  renderDoc();
+  renderSidebar();
+}
+
+// ─── Events ───────────────────────────────────────────────────────────────────
+
+// Text selection in document
+docEl.addEventListener('mouseup', () => {
+  setTimeout(() => {
+    const offsets = getSelectionOffsets();
+    if (!offsets) { hidePopover(); return; }
+    pending = offsets;
+    const range = window.getSelection().getRangeAt(0);
+    showPopover(range.getBoundingClientRect());
+  }, 0);
+});
+
+// Quick-action buttons
+document.querySelectorAll('.qbtn').forEach(btn => {
+  btn.addEventListener('click', e => {
+    e.stopPropagation();
+    addAnnotation(btn.dataset.type);
+  });
+});
+
+// Custom feedback submit
+document.getElementById('pop-submit').addEventListener('click', e => {
+  e.stopPropagation();
+  const val = document.getElementById('pop-input').value.trim();
+  if (!val || !pending) return;
+  addAnnotation('custom', val);
+});
+document.getElementById('pop-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') document.getElementById('pop-submit').click();
+});
+
+// Close popover when clicking outside
+document.addEventListener('mousedown', e => {
+  if (popover.classList.contains('show') &&
+      !popover.contains(e.target) &&
+      !docEl.contains(e.target)) {
+    hidePopover();
+  }
+});
+
+// Toolbar: Clear All
+document.getElementById('btn-clear').addEventListener('click', () => {
+  if (!annotations.length) return;
+  if (confirm('Remove all annotations?')) {
+    annotations = [];
+    renderDoc();
+    renderSidebar();
+  }
+});
+
+// Toolbar: Export JSON
+document.getElementById('btn-export').addEventListener('click', () => {
+  const data = annotations.map(a => ({
+    id:           a.id,
+    type:         a.type,
+    label:        TYPES[a.type].label,
+    selectedText: a.text,
+    note:         a.note || null,
+    charStart:    a.start,
+    charEnd:      a.end,
+  }));
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url  = URL.createObjectURL(blob);
+  const a    = Object.assign(document.createElement('a'), { href: url, download: 'feedback.json' });
+  a.click();
+  URL.revokeObjectURL(url);
+});
+
+// Load Document modal
+const loadModal = document.getElementById('load-modal');
+document.getElementById('btn-load').addEventListener('click', () => {
+  document.getElementById('load-textarea').value = docText;
+  loadModal.classList.add('show');
+});
+document.getElementById('load-cancel').addEventListener('click', () => loadModal.classList.remove('show'));
+document.getElementById('load-confirm').addEventListener('click', () => {
+  const val = document.getElementById('load-textarea').value.trim();
+  if (val) {
+    docText     = val;
+    annotations = [];
+    renderDoc();
+    renderSidebar();
+  }
+  loadModal.classList.remove('show');
+});
+loadModal.addEventListener('click', e => {
+  if (e.target === loadModal) loadModal.classList.remove('show');
+});
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
+renderDoc();
+renderSidebar();
+</script>
+</body>
+</html>
