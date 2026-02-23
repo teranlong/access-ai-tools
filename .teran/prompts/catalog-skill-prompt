@@ -1,0 +1,11 @@
+I want help creating a skill for evaluting an access db migration project. I have several example projects. under /SampleProjects. There are a lot of files to be smart about what you do and dont load in to the context window. favor reusable python scripts where possible to preserve the context window. First I want you to take an inial analysis of the files. do this by creating a reusable python script to programmatically generate a report of all of the files. then review the skill proposal and the python script report and we will discuss improvements on my proposed skill. The python scipt will later be included in the skill for reuse. I am attaching the skill proposal now. Start by asking questions if you need to clarify  the objectves adn process. create a plan
+
+
+review the catalog skill. Identify all of the conversions that have been identified (docx -> md) etc. use the todo list tool to track that each one
+   is evaluated (what is the best way to solve this) implemented as a module in the skill (prefer python solutions in the form of a .py file.) and
+  tested (run the file and ensure the result is reasonable and readable). you may install python libraries but track the requirements.txt and use a
+  venv or other similar solution so any agent that uses the tool can accuratley repoduce the results. you may do web searches to determine the best
+  solutions for each conversion type. afterwards you should create a script convert to ai compatible which runs the appropriate conversion for each
+  file and saves it in another location (without touching the original). start now by building a comprehensive plan. You should clarify all details
+  now. after planningg you may use your best judgement that aligns with the goal of enabling an ai to understnd all of the files in the repo. You may
+   propose multiple conversions if one is very context intensive and another simpler one might do. start now by resolving all ambiguity

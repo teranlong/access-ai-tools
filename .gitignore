@@ -59,7 +59,7 @@ desktop.ini
 # =========================================================
 # .agent/ (singular) - purpose unclear; exclude until confirmed safe to commit
 .agent/
-.teran/
+# .teran/
 
 # =========================================================
 # CLAUDE CODE LOCAL CONFIG  (machine-specific, never commit)
