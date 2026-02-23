@@ -996,15 +996,10 @@ function applyCycleSelection(el, level, x, y) {
 
   if (level === 0) {
     selectWordAt(x, y);
-  } else if (level === 1) {
-    const range = document.createRange();
-    range.selectNodeContents(el);
-    sel.addRange(range);
   } else {
     const range = document.createRange();
     range.selectNodeContents(el);
     sel.addRange(range);
-    showGlow(el);
   }
 }
 
@@ -1053,7 +1048,7 @@ docEl.addEventListener('click', e => {
   hidePopover();
 
   if (clickCycle.el === el) {
-    clickCycle.level = (clickCycle.level + 1) % 3;
+    clickCycle.level = (clickCycle.level + 1) % 2;
   } else {
     clickCycle.el    = el;
     clickCycle.level = 0;
