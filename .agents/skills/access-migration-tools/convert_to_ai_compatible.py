@@ -32,7 +32,7 @@ from pathlib import Path
 # ---------------------------------------------------------------------------
 # Version — update here and the output path changes automatically
 # ---------------------------------------------------------------------------
-VERSION = "1.3.0"
+VERSION = "1.3.1"
 
 # ---------------------------------------------------------------------------
 # Locate the converters package (same directory as this script)
@@ -49,12 +49,9 @@ from converters.base import ConversionResult, format_size
 # Skip dirs (same as catalog.py)
 # ---------------------------------------------------------------------------
 _SKIP_DIRS: set[str] = {
-    ".claude", ".agents", "_claudeartifacts", "__pycache__", ".git", "node_modules",
+    ".claude", ".agents", "__pycache__", ".git", "node_modules",
 }
 _SKIP_PREFIXES: tuple[str, ...] = ("~$",)
-
-# Extensions/proposed-conversions that catalog marks as already-native
-_NATIVE_SKIP_PROPOSED: set[str] = {"keep-as-is", "keep-as-reference"}
 
 
 # ---------------------------------------------------------------------------
@@ -158,12 +155,17 @@ def _expected_output_paths(record: dict, project_root: Path, output_root: Path) 
     — a partial miss just causes a re-run which is safe.
     """
     from converters.base import make_output_path
+    from converters import _COPY_VERBATIM
+    from converters.base import SKIP_CONVERSIONS
+
     ext = record.get("extension", "").lower()
     source = project_root / record["relative_path"]
 
-    if ext in {".bas", ".cls"}:
+    # Verbatim copies (Native or VBA)
+    if ext in _COPY_VERBATIM or record.get("proposed_conversion") in SKIP_CONVERSIONS:
         rel = source.relative_to(project_root)
         return [output_root / rel]
+
     if ext == ".pdf":
         return [make_output_path(source, output_root, project_root, ".md")]
     if ext == ".vsdx":
@@ -242,9 +244,9 @@ def _write_summary(
         "|--------|-------|",
         f"| Total files | {len(run_log)} |",
         f"| Converted | {len(converted)} |",
-        f"| Copied verbatim (VBA) | {len(copied)} |",
+        f"| Copied verbatim (Native/VBA) | {len(copied)} |",
         f"| Stubbed (manual required) | {len(stubbed)} |",
-        f"| Skipped (native format) | {len(skipped)} |",
+        f"| Skipped | {len(skipped)} |",
         f"| Already up-to-date | {len(idempotent)} |",
         f"| Errors | {len(errors)} |",
         "",
@@ -284,7 +286,7 @@ def _write_summary(
     # Copied
     if copied:
         lines += [
-            "## Copied Verbatim (VBA Source)",
+            "## Copied Verbatim (Native or VBA Source)",
             "",
             "| File |",
             "|------|",
@@ -322,7 +324,7 @@ def _write_summary(
     # Skipped
     if skipped:
         lines += [
-            "## Skipped Files (Native Format — No Conversion Needed)",
+            "## Skipped Files",
             "",
         ]
         for r in skipped:

@@ -65,9 +65,8 @@ agent-data/ai-compatible/v{VERSION}/{project-name}/
 
 The converter mirrors the original directory structure. For each file it will:
 - **convert** — produce a `.md` equivalent (Word, Excel, PDF, Visio, RTF, PowerPoint)
-- **copy** — copy verbatim without changes (VBA `.bas`/`.cls` source files)
-- **stub** — write a `.md` stub explaining why the file cannot be auto-converted (Access `.accdb`, Figma `.fig`, Power BI `.pbix`, video files, etc.)
-- **skip** — leave native-format files in place (`keep-as-is` and `keep-as-reference`)
+- **copy** — copy verbatim without changes (Native formats like `.md`, `.txt`, `.png`, and VBA `.bas`/`.cls` source files)
+- **stub** — write a `.md` stub explaining why the file cannot be auto-converted (Access `.accdb`, `.fig`, `.pbix`, video files, etc.)
 - **idempotent** — skip files whose output is already newer than the source (re-run safe)
 
 ---
@@ -119,10 +118,10 @@ After presenting the summary, explicitly call out any stubbed or errored files a
 | `.vsdx` | lxml + aspose-diagram | Shapes and text extracted; optionally rendered as PNG |
 | `.accdb` / `.mdb` | pyodbc | Table schema and row samples extracted |
 
-### What is copied or skipped
+### What is copied verbatim
 
 | Format | Action | Reason |
 |--------|--------|--------|
 | `.bas` / `.cls` | copy verbatim | VBA source — already plain text |
-| `.md` / `.txt` / `.sql` / `.json` / `.xml` / `.svg` / `.csv` | skip | Native — no conversion needed |
-| `.png` / `.jpg` / `.jpeg` / `.bmp` / `.excalidraw` | skip | Keep as reference — AI can read directly |
+| `.md` / `.txt` / `.sql` / `.json` / `.xml` / `.svg` / `.csv` | copy verbatim | Native — no conversion needed |
+| `.png` / `.jpg` / `.jpeg` / `.bmp` / `.excalidraw` | copy verbatim | Vision-readable — AI can read directly |

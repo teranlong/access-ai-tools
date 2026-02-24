@@ -70,11 +70,7 @@ def dispatch(
 
     # --- Skip: native-readable formats (no conversion needed) ---------------
     if ext in _NATIVE_SKIP or proposed in SKIP_CONVERSIONS:
-        return ConversionResult(
-            success=True,
-            skipped=True,
-            action="skipped",
-        )
+        return copy_native.convert(source, output_root, project_root)
 
     # --- Verbatim copy: VBA source files ------------------------------------
     if ext in _COPY_VERBATIM:
