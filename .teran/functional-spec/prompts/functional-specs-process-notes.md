@@ -49,5 +49,3 @@ Capability / feature‑centric spec:
 Data / contract‑centric spec:
 - Top-level sections emphasize core entities, invariants, and external contracts (Entities, APIs, Events, Integrations), with flows and capabilities mapping onto those structures.
 ​- Useful when stability of data and interfaces matters most (e.g., API‑first, integration‑heavy systems).
-
-review playground (loop 4)
