@@ -1,0 +1,4 @@
+# Generated Access databases and lock files are local run artifacts.
+*.accdb
+*.laccdb
+!.gitignore
