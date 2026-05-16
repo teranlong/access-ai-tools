@@ -1,0 +1,13 @@
+{
+  "timestamp": "2026-05-15T21:17:00.780373",
+  "experiments": [
+    {
+      "name": "control_tree_dump",
+      "success": false,
+      "duration_ms": 7371,
+      "findings": [],
+      "screenshots": [],
+      "error": "Traceback (most recent call last):\n  File \"C:\\Users\\teranlong\\Workspace\\access-ai-tools\\access-e2e-eval\\experiments\\lab.py\", line 860, in run_experiments\n    result = fn()\n  File \"C:\\Users\\teranlong\\Workspace\\access-ai-tools\\access-e2e-eval\\experiments\\lab.py\", line 207, in control_tree_dump\n    window.print_control_identifiers(filename=str(tree_path))\n    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\teranlong\\Workspace\\access-ai-tools\\access-e2e-eval\\.venv\\Lib\\site-packages\\pywinauto\\application.py\", line 696, in print_control_identifiers\n    print_identifiers([this_ctrl, ], log_func=log_func)\n    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\teranlong\\Workspace\\access-ai-tools\\access-e2e-eval\\.venv\\Lib\\site-packages\\pywinauto\\application.py\", line 685, in print_identifiers\n    print_identifiers(ctrl.children(), current_depth + 1, log_func)\n    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\teranlong\\Workspace\\access-ai-tools\\access-e2e-eval\\.venv\\Lib\\site-packages\\pywinauto\\application.py\", line 685, in print_identifiers\n    print_identifiers(ctrl.children(), current_depth + 1, log_func)\n    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\teranlong\\Workspace\\access-ai-tools\\access-e2e-eval\\.venv\\Lib\\site-packages\\pywinauto\\application.py\", line 685, in print_identifiers\n    print_identifiers(ctrl.children(), current_depth + 1, log_func)\n    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  [Previous line repeated 4 more times]\n  File \"C:\\Users\\teranlong\\Workspace\\access-ai-tools\\access-e2e-eval\\.venv\\Lib\\site-packages\\pywinauto\\application.py\", line 681, in print_identifiers\n    log_func(output)\n    ~~~~~~~~^^^^^^^^\n  File \"C:\\Users\\teranlong\\Workspace\\access-ai-tools\\access-e2e-eval\\.venv\\Lib\\site-packages\\pywinauto\\application.py\", line 694, in log_func\n    log_file.write(str(msg) + os.linesep)\n    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^\n  File \"<frozen codecs>\", line 730, in write\n  File \"<frozen codecs>\", line 380, in write\n  File \"C:\\Python314\\Lib\\encodings\\cp1252.py\", line 12, in encode\n    return codecs.charmap_encode(input,errors,encoding_table)\n           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nUnicodeEncodeError: 'charmap' codec can't encode character '\\u202a' in position 83: character maps to <undefined>\n"
+    }
+  ]
+}

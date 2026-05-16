@@ -1,0 +1,103 @@
+Control Identifiers:
+
+Dialog - 'Access - exp_211652 : Database- C:\Users\teranlong\Workspace\access-ai-tools\access-e2e-eval\experiments\evidence\exp_211652.accdb (Access 2007 - 2016 file for'    (L1138, T455, R1948, B1592)
+['Dialog', 'Access - exp_211652 : Database- C:\\Users\\teranlong\\Workspace\\access-ai-tools\\access-e2e-eval\\experiments\\evidence\\exp_211652.accdb (Access 2007 - 2016 file for', 'Access - exp_211652 : Database- C:\\Users\\teranlong\\Workspace\\access-ai-tools\\access-e2e-eval\\experiments\\evidence\\exp_211652.accdb (Access 2007 - 2016 file forDialog']
+child_window(title="Access - exp_211652 : Database- C:\Users\teranlong\Workspace\access-ai-tools\access-e2e-eval\experiments\evidence\exp_211652.accdb (Access 2007 - 2016 file for", control_type="Window")
+   | 
+   | Pane - 'DropShadowTop'    (L1149, T779, R1937, B788)
+   | ['DropShadowTopPane', 'Pane', 'DropShadowTop', 'Pane0', 'Pane1']
+   | child_window(title="DropShadowTop", control_type="Pane")
+   | 
+   | Pane - 'MsoDockTop'    (L1149, T457, R1937, B779)
+   | ['Pane2', 'MsoDockTopPane', 'MsoDockTop']
+   | child_window(title="MsoDockTop", control_type="Pane")
+   |    | 
+   |    | Toolbar - ''    (L1149, T729, R1937, B779)
+   |    | ['Security WarningToolbar', 'Toolbar', 'Toolbar0', 'Toolbar1']
+   |    |    | 
+   |    |    | Pane - 'Business Bar'    (L1149, T729, R1937, B779)
+   |    |    | ['Business Bar', 'Pane3', 'Business BarPane']
+   |    |    | child_window(title="Business Bar", control_type="Pane")
+   |    |    |    | 
+   |    |    |    | Pane - ''    (L1149, T729, R1937, B779)
+   |    |    |    | ['Security WarningPane', 'Pane4', 'Security WarningPane0', 'Security WarningPane1']
+   |    |    |    |    | 
+   |    |    |    |    | Pane - ''    (L1149, T729, R1937, B779)
+   |    |    |    |    | ['Security WarningPane2', 'Pane5']
+   |    |    |    |    |    | 
+   |    |    |    |    |    | Custom - 'Message Bars'    (L1149, T729, R1937, B779)
+   |    |    |    |    |    | ['Message Bars', 'Message BarsCustom', 'Custom', 'Custom0', 'Custom1']
+   |    |    |    |    |    | child_window(title="Message Bars", control_type="Custom")
+   |    |    |    |    |    |    | 
+   |    |    |    |    |    |    | GroupBox - 'Security Warning'    (L1161, T729, R1925, B779)
+   |    |    |    |    |    |    | ['Security WarningGroupBox', 'Security Warning', 'GroupBox', 'Security Warning0', 'Security Warning1', 'GroupBox0', 'GroupBox1']
+   |    |    |    |    |    |    | child_window(title="Security Warning", control_type="Group")
+   |    |    |    |    |    |    |    | 
+   |    |    |    |    |    |    |    | Static - 'Security Warning'    (L1215, T729, R1387, B779)
+   |    |    |    |    |    |    |    | ['Security WarningStatic', 'Static', 'Security Warning2', 'Static0', 'Static1']
+   |    |    |    |    |    |    |    | child_window(title="Security Warning", control_type="Text")
+   |    |    |    |    |    |    |    | 
+   |    |    |    |    |    |    |    | Hyperlink - 'Some active content has been disabled. Click for more details.'    (L1399, T729, R1717, B779)
+   |    |    |    |    |    |    |    | ['Some active content has been disabled. Click for more details.', 'Hyperlink', 'Some active content has been disabled. Click for more details.Hyperlink']
+   |    |    |    |    |    |    |    | child_window(title="Some active content has been disabled. Click for more details.", control_type="Hyperlink")
+   |    |    |    |    |    |    |    | 
+   |    |    |    |    |    |    |    | Button - 'Enable Content'    (L1730, T734, R1879, B773)
+   |    |    |    |    |    |    |    | ['Button', 'Enable Content', 'Enable ContentButton', 'Button0', 'Button1']
+   |    |    |    |    |    |    |    | child_window(title="Enable Content", control_type="Button")
+   |    |    |    |    |    |    |    | 
+   |    |    |    |    |    |    |    | Button - 'Close this message'    (L1889, T741, R1915, B767)
+   |    |    |    |    |    |    |    | ['Button2', 'Close this messageButton', 'Close this message']
+   |    |    |    |    |    |    |    | child_window(title="Close this message", control_type="Button")
+   |    | 
+   |    | Toolbar - ''    (L1149, T457, R1937, B729)
+   |    | ['Toolbar2']
+   |    |    | 
+   |    |    | Pane - 'Ribbon'    (L1149, T457, R1937, B729)
+   |    |    | ['Ribbon', 'Pane6', 'RibbonPane', 'Ribbon0', 'Ribbon1', 'RibbonPane0', 'RibbonPane1']
+   |    |    | child_window(title="Ribbon", control_type="Pane")
+   |    |    |    | 
+   |    |    |    | Pane - ''    (L1149, T457, R1937, B729)
+   |    |    |    | ['Pane7']
+   |    |    |    |    | 
+   |    |    |    |    | Pane - ''    (L1149, T457, R1937, B729)
+   |    |    |    |    | ['Pane8']
+   |    |    |    |    |    | 
+   |    |    |    |    |    | Pane - 'Ribbon'    (L1149, T457, R1937, B729)
+   |    |    |    |    |    | ['Ribbon2', 'Pane9', 'RibbonPane2']
+   |    |    |    |    |    | child_window(title="Ribbon", control_type="Pane")
+   |    |    |    |    |    |    | 
+   |    |    |    |    |    |    | Toolbar - 'Quick Access Toolbar'    (L1212, T457, R1412, B529)
+   |    |    |    |    |    |    | ['Quick Access Toolbar', 'Toolbar3', 'Quick Access ToolbarToolbar']
+   |    |    |    |    |    |    | child_window(title="Quick Access Toolbar", control_type="ToolBar")
+   |    |    |    |    |    |    |    | 
+   |    |    |    |    |    |    |    | Button - 'Save'    (L1212, T471, R1254, B514)
+   |    |    |    |    |    |    |    | ['Button3', 'SaveButton', 'Save']
+   |    |    |    |    |    |    |    | child_window(title="Save", auto_id="FileSave", control_type="Button")
+   |    |    |    |    |    |    |    | 
+   |    |    |    |    |    |    |    | SplitButton - 'Can't Undo'    (L1255, T471, R1311, B514)
+   |    |    |    |    |    |    |    | ["Can't Undo", 'SplitButton', "Can't UndoSplitButton", "Can't Undo0", "Can't Undo1", 'SplitButton0', 'SplitButton1']
+   |    |    |    |    |    |    |    | child_window(title="Can't Undo", auto_id="Undo", control_type="SplitButton")
+   |    |    |    |    |    |    |    |    | 
+   |    |    |    |    |    |    |    |    | Button - 'Can't Undo'    (L1255, T471, R1292, B514)
+   |    |    |    |    |    |    |    |    | ['Button4', "Can't Undo2", "Can't UndoButton"]
+   |    |    |    |    |    |    |    |    | child_window(title="Can't Undo", control_type="Button")
+   |    |    |    |    |    |    |    |    | 
+   |    |    |    |    |    |    |    |    | MenuItem - 'More Options'    (L1292, T471, R1311, B514)
+   |    |    |    |    |    |    |    |    | ['MenuItem', 'More OptionsMenuItem', 'More Options', 'MenuItem0', 'MenuItem1', 'More OptionsMenuItem0', 'More OptionsMenuItem1', 'More Options0', 'More Options1']
+   |    |    |    |    |    |    |    |    | child_window(title="More Options", auto_id="Undo_Dropdown", control_type="MenuItem")
+   |    |    |    |    |    |    |    | 
+   |    |    |    |    |    |    |    | SplitButton - 'Redo'    (L1312, T471, R1368, B514)
+   |    |    |    |    |    |    |    | ['Redo', 'SplitButton2', 'RedoSplitButton', 'Redo0', 'Redo1']
+   |    |    |    |    |    |    |    | child_window(title="Redo", auto_id="Redo", control_type="SplitButton")
+   |    |    |    |    |    |    |    |    | 
+   |    |    |    |    |    |    |    |    | Button - 'Redo'    (L1312, T471, R1349, B514)
+   |    |    |    |    |    |    |    |    | ['Button5', 'RedoButton', 'Redo2']
+   |    |    |    |    |    |    |    |    | child_window(title="Redo", control_type="Button")
+   |    |    |    |    |    |    |    |    | 
+   |    |    |    |    |    |    |    |    | MenuItem - 'More Options'    (L1349, T471, R1368, B514)
+   |    |    |    |    |    |    |    |    | ['MenuItem2', 'More OptionsMenuItem2', 'More Options2']
+   |    |    |    |    |    |    |    |    | child_window(title="More Options", auto_id="Redo_Dropdown", control_type="MenuItem")
+   |    |    |    |    |    |    |    | 
+   |    |    |    |    |    |    |    | MenuItem - 'Customize Quick Access Toolbar'    (L1370, T470, R1412, B516)
+   |    |    |    |    |    |    |    | ['Customize Quick Access Toolbar', 'Customize Quick Access ToolbarMenuItem', 'MenuItem3']
+   |    |    |    |    |    |    |    | child_window(title="Customize Quick Access Toolbar", control_type="MenuItem")

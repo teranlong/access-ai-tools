@@ -1,0 +1,31 @@
+{
+  "timestamp": "2026-05-15T21:16:25.438100",
+  "experiments": [
+    {
+      "name": "screenshot_all_forms",
+      "success": true,
+      "duration_ms": 16806,
+      "findings": [
+        "\u2705 CompanyEditor opened successfully",
+        "\u2705 UserEditor opened successfully",
+        "\u2705 ContactEditor opened successfully",
+        "\u2705 CaseEditor opened successfully",
+        "\u2705 CompanyUserLookup opened successfully",
+        "\u2705 CompanyList opened successfully",
+        "\u2705 UserList opened successfully",
+        "\u2705 TestFormDesignerCheck opened successfully"
+      ],
+      "screenshots": [
+        "211613_form_CompanyEditor.png",
+        "211614_form_UserEditor.png",
+        "211615_form_ContactEditor.png",
+        "211616_form_CaseEditor.png",
+        "211617_form_CompanyUserLookup.png",
+        "211618_form_CompanyList.png",
+        "211619_form_UserList.png",
+        "211620_form_TestFormDesignerCheck.png"
+      ],
+      "error": null
+    }
+  ]
+}

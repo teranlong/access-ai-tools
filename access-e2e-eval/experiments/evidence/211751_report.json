@@ -1,0 +1,37 @@
+{
+  "timestamp": "2026-05-15T21:17:51.569363",
+  "experiments": [
+    {
+      "name": "control_tree_dump",
+      "success": true,
+      "duration_ms": 10970,
+      "findings": [
+        "Control tree dumped to 211725_control_tree.txt",
+        "COM control enum failed: <unknown>.Value"
+      ],
+      "screenshots": [],
+      "error": null
+    },
+    {
+      "name": "keyboard_type_and_verify",
+      "success": false,
+      "duration_ms": 18716,
+      "findings": [
+        "  CompanyName: typed='Experiment Corp', COM reads='Contoso Health', match=False",
+        "  Industry: typed='Research', COM reads='Healthcare', match=False",
+        "  Status: typed='Active', COM reads='Active', match=True",
+        "  Phone: typed='555-0199', COM reads='206-555-0100', match=False",
+        "  Email: typed='exp@test.example', COM reads='admin@contoso.example', match=False",
+        "  City: typed='Lab City', COM reads='Seattle', match=False",
+        "  State: typed='CA', COM reads='WA', match=False",
+        "\u2705 Submit button clicked",
+        "\u274c Record NOT found in database after save"
+      ],
+      "screenshots": [
+        "211742_after_typing_all_fields.png",
+        "211745_after_submit.png"
+      ],
+      "error": null
+    }
+  ]
+}
