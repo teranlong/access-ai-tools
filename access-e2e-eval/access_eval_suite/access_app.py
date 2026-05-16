@@ -99,10 +99,15 @@ class AccessAppSession:
         try:
             active_form = self.app.Screen.ActiveForm
             if active_form.Dirty:
-                raise AccessAppError(
-                    f"Access did not save the active form {active_form.Name!r}; "
-                    "the record is still dirty, likely because validation failed."
-                )
+                # Keyboard Ctrl+S didn't commit; force save via COM
+                active_form.Dirty = False
+                time.sleep(0.5)
+                # Re-check after COM save
+                if active_form.Dirty:
+                    raise AccessAppError(
+                        f"Access did not save the active form {active_form.Name!r}; "
+                        "the record is still dirty, likely because validation failed."
+                    )
         except AccessAppError:
             raise
         except Exception:

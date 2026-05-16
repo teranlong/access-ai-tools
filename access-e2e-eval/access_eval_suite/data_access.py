@@ -27,8 +27,11 @@ class AccessData:
     def open(self) -> None:
         status = inspect_environment()
         if status.has_pyodbc and status.ace_drivers:
-            self._open_odbc(status.ace_drivers[0])
-            return
+            try:
+                self._open_odbc(status.ace_drivers[0])
+                return
+            except Exception:
+                pass
         if status.has_pywin32:
             self._open_com()
             return

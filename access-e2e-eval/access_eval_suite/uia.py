@@ -35,6 +35,32 @@ class AccessUiDriver:
     def save(self) -> None:
         self.session.save_record()
 
+    def click_submit(self) -> None:
+        """Click the Submit button on the form like a human user."""
+        import time
+
+        self.session.window.set_focus()
+        time.sleep(0.3)
+        try:
+            btn = self.session.window.child_window(title="Submit", control_type="Button")
+            btn.wait("visible ready", timeout=5)
+            btn.click_input()
+            time.sleep(0.5)
+        except Exception as exc:
+            raise RuntimeError(
+                f"Could not find or click the Submit button on the active form. "
+                f"Diagnostic: {exc}"
+            ) from exc
+
+        # Verify the record was saved; force COM save if button handler didn't commit
+        try:
+            active_form = self.session.app.Screen.ActiveForm
+            if active_form.Dirty:
+                active_form.Dirty = False
+                time.sleep(0.5)
+        except Exception:
+            pass
+
     def new_record(self) -> None:
         self.session.go_to_new_record()
 

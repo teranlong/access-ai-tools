@@ -334,6 +334,42 @@ def _create_editor_form(access, form_name: str, record_source: str, controls: li
         control.Name = field_name
         top += 450
 
+    # Add Submit button below the last field
+    btn_top = top + 200
+    btn = access.CreateControl(
+        form.Name,
+        ac.CONTROL_COMMAND_BUTTON,
+        ac.SECTION_DETAIL,
+        "",
+        "",
+        2300,
+        btn_top,
+        2000,
+        400,
+    )
+    btn.Name = "btnSubmit"
+    btn.Caption = "Submit"
+
+    # Wire the button's OnClick event.
+    # Try VBA first (most reliable), fall back to expression if VBA project is locked.
+    vba_injected = False
+    try:
+        btn.OnClick = "[Event Procedure]"
+        access.DoCmd.Save(ac.AC_FORM, generated_name)
+        module = form.Module
+        module.InsertText(
+            "Private Sub btnSubmit_Click()\r\n"
+            "    If Me.Dirty Then Me.Dirty = False\r\n"
+            "End Sub\r\n"
+        )
+        vba_injected = True
+    except Exception:
+        pass
+
+    if not vba_injected:
+        # Fallback: use a macro expression (no VBA trust required)
+        btn.OnClick = "=DoCmd.RunCommand(21)"
+
     access.DoCmd.Save(ac.AC_FORM, generated_name)
     access.DoCmd.Close(ac.AC_FORM, generated_name, ac.AC_SAVE_YES)
     access.DoCmd.Rename(form_name, ac.AC_FORM, generated_name)

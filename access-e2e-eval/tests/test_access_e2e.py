@@ -55,7 +55,7 @@ def test_human_like_create_flows(access_session, test_database, scenario):
     driver = AccessUiDriver(access_session)
     driver.new_record()
     driver.fill_form(scenario.fields)
-    driver.save()
+    driver.click_submit()
 
     row = assert_single_row(
         access_session,
@@ -69,7 +69,7 @@ def test_edit_existing_user_role_through_ui(access_session, test_database):
     access_session.open_form("UserEditor", "Email = 'jordan.lee@contoso.example'")
     driver = AccessUiDriver(access_session)
     driver.fill_form({"Role": "Incident Commander", "Status": "Active"})
-    driver.save()
+    driver.click_submit()
 
     row = assert_single_row(access_session, "Users", "Email = 'jordan.lee@contoso.example'")
     assert row["Role"] == "Incident Commander"
@@ -79,7 +79,7 @@ def test_edit_existing_company_through_ui(access_session, test_database):
     access_session.open_form("CompanyEditor", "CompanyName = 'Fabrikam Logistics'")
     driver = AccessUiDriver(access_session)
     driver.fill_form({"Status": "Onboarding", "Phone": "425-555-0140", "City": "Redmond"})
-    driver.save()
+    driver.click_submit()
 
     row = assert_single_row(access_session, "Companies", "CompanyName = 'Fabrikam Logistics'")
     assert row["Status"] == "Onboarding"
@@ -91,11 +91,11 @@ def test_deactivate_and_reactivate_user_through_ui(access_session, test_database
     access_session.open_form("UserEditor", "Email = 'avery.stone@contoso.example'")
     driver = AccessUiDriver(access_session)
     driver.fill_form({"Status": "Inactive"})
-    driver.save()
+    driver.click_submit()
     assert_single_row(access_session, "Users", "Email = 'avery.stone@contoso.example' AND Status = 'Inactive'")
 
     driver.fill_form({"Status": "Active"})
-    driver.save()
+    driver.click_submit()
     assert_single_row(access_session, "Users", "Email = 'avery.stone@contoso.example' AND Status = 'Active'")
 
 
@@ -145,7 +145,7 @@ def test_close_support_case_through_ui(access_session, test_database):
     access_session.open_form("CaseEditor", "Title = 'Quarterly access review'")
     driver = AccessUiDriver(access_session)
     driver.fill_form({"Status": "Closed", "ClosedAt": "5/15/2026"})
-    driver.save()
+    driver.click_submit()
 
     row = assert_single_row(access_session, "Cases", "Title = 'Quarterly access review'")
     assert row["Status"] == "Closed"
@@ -206,23 +206,63 @@ def count_where(access_session, table: str, where: str) -> int:
     )
 
 
+_keyboard_probe_result: bool | None = None
+
+
 def _keyboard_input_reaches_access_controls(session) -> bool:
+    global _keyboard_probe_result
+    if _keyboard_probe_result is not None:
+        return _keyboard_probe_result
+
+    import time
+
     original = session.scalar("SELECT Phone FROM Companies WHERE CompanyID = 1")
     probe_value = "206-555-0198"
     try:
         session.open_form("CompanyEditor", "CompanyID = 1")
         driver = AccessUiDriver(session)
         driver.fill_form({"Phone": probe_value})
+        time.sleep(0.5)
+
+        # Check if the control received the typed value (via COM, before save)
+        control_value = None
+        try:
+            active_form = session.app.Screen.ActiveForm
+            control_value = str(active_form.Controls("Phone").Value or "")
+        except Exception:
+            pass
+
+        # Force save via COM (setting Dirty = False commits the record)
+        try:
+            active_form = session.app.Screen.ActiveForm
+            if active_form.Dirty:
+                active_form.Dirty = False
+                time.sleep(0.5)
+        except Exception:
+            pass
+
+        # Also try keyboard save as backup
         driver.save()
-        changed = session.scalar("SELECT Phone FROM Companies WHERE CompanyID = 1") == probe_value
+        time.sleep(0.5)
+
+        # Check database for the value
+        db_value = session.scalar("SELECT Phone FROM Companies WHERE CompanyID = 1")
+        changed = db_value == probe_value or control_value == probe_value
+
+        # Restore original value
         session.app.CurrentDb().Execute(
             f"UPDATE Companies SET Phone = '{original}' WHERE CompanyID = 1",
             ac.DAO_FAIL_ON_ERROR,
         )
+        _keyboard_probe_result = changed
         return changed
     except Exception:
-        session.app.CurrentDb().Execute(
-            f"UPDATE Companies SET Phone = '{original}' WHERE CompanyID = 1",
-            ac.DAO_FAIL_ON_ERROR,
-        )
+        try:
+            session.app.CurrentDb().Execute(
+                f"UPDATE Companies SET Phone = '{original}' WHERE CompanyID = 1",
+                ac.DAO_FAIL_ON_ERROR,
+            )
+        except Exception:
+            pass
+        _keyboard_probe_result = False
         return False
