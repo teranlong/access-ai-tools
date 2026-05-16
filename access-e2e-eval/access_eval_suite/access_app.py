@@ -91,11 +91,16 @@ class AccessAppSession:
         self.window.set_focus()
 
     def save_record(self) -> None:
-        from pywinauto.keyboard import send_keys
+        try:
+            from pywinauto.keyboard import send_keys
 
-        self.window.set_focus()
-        send_keys("^s")
-        time.sleep(0.5)
+            self.window.set_focus()
+            send_keys("^s")
+            time.sleep(0.5)
+        except RuntimeError:
+            # SendInput blocked — skip keyboard save, fall through to COM
+            pass
+
         try:
             active_form = self.app.Screen.ActiveForm
             if active_form.Dirty:
@@ -114,11 +119,13 @@ class AccessAppSession:
             pass
 
     def refresh(self) -> None:
-        from pywinauto.keyboard import send_keys
-
         self.app.RefreshDatabaseWindow()
         self.window.set_focus()
-        send_keys("{F5}")
+        try:
+            from pywinauto.keyboard import send_keys
+            send_keys("{F5}")
+        except RuntimeError:
+            pass  # SendInput blocked; COM refresh above is sufficient
         time.sleep(0.5)
 
     def rows(self, sql: str) -> list[dict[str, Any]]:

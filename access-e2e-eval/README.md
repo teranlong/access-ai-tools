@@ -61,9 +61,10 @@ python -m pytest -q --maxfail=3
 | Access COM/DAO | ✅ | ✅ | Works on all architectures via COM automation. |
 | ODBC (ACE driver) | ✅ | ⚠️ | May fail if Python bitness doesn't match the ACE driver. The suite catches the load error and falls back to COM/DAO automatically. |
 | pywinauto UI Automation | ✅ | ✅ | Uses the `uia` backend by default; falls back to `win32` if needed. |
-| Keyboard input (`send_keys`) | ✅ | ✅ | Works when run from an unlocked interactive desktop. Fails from headless/disconnected sessions on any architecture. |
-| Button click (`click_input`) | ✅ | ✅ | Clicks the Submit button via pywinauto. |
-| Record save | ✅ | ✅ | Tests click the Submit button; `save_record()` sends `Ctrl+S` then falls back to COM (`active_form.Dirty = False`) if the keyboard save doesn't commit. |
+| PostMessage WM_CHAR input | ✅ | ✅ | **Primary input method.** Sends characters directly to the focused Access control handle via `PostMessage`. Works in agent sessions where `SendInput`/`SetCursorPos` are blocked. |
+| Keyboard input (`send_keys`) | ✅ | ✅ | Fallback when PostMessage can't get a handle. Works from unlocked interactive desktops. |
+| Button click | ✅ | ✅ | Tries pywinauto `click_input()`, then Win32 `BM_CLICK`, then `DoCmd.RunCommand`. |
+| Record save | ✅ | ✅ | Layered: Submit button → `Ctrl+S` → COM `Dirty = False`. |
 
 If ODBC is unavailable, the tests fall back to Access COM/DAO assertions. If Access itself is unavailable, the tests skip with diagnostics.
 
@@ -81,19 +82,36 @@ If ODBC is unavailable, the tests fall back to Access COM/DAO assertions. If Acc
 
 The tests use COM to create/open the database and position Access on the right form, then use keyboard/UI operations for the actual user action under test: typing values into controls, clicking the Submit button to save, navigating between records, and reading visible form state. Assertions query the resulting database to avoid brittle screen scraping where Access exposes controls poorly.
 
+## Input strategy — PostMessage WM_CHAR
+
+The suite's primary input method bypasses `SendInput` (which is blocked in many agent and remote-desktop sessions) and instead delivers characters directly to the focused Access control handle via Win32 `PostMessage(WM_CHAR)`.
+
+**How it works:**
+
+1. **COM navigation** — `DoCmd.GoToControl` moves focus to the target control.
+2. **Thread attachment** — `AttachThreadInput` briefly attaches to Access's UI thread so `GetFocus()` can retrieve the focused control's window handle (`OKttbx` class for Access text boxes).
+3. **Clear** — `EM_SETSEL(0, -1)` + `WM_CLEAR` selects and clears existing text.
+4. **Type** — `PostMessage(WM_CHAR, ch)` sends each character to the control.
+5. **Commit** — Moving focus to another control via `GoToControl` commits the bound field value (Access only commits on focus-out).
+
+This approach is:
+- **Human-like** — characters arrive one at a time through the control's message queue, exactly as physical keyboard input does.
+- **Reliable in agent sessions** — doesn't depend on `SendInput`, `SetCursorPos`, or `SetForegroundWindow`.
+- **Fallback-aware** — if PostMessage can't get a handle, falls back to `send_keys`, then to direct COM `Value` assignment.
+
 ## Save strategy
 
 The suite uses a layered save approach to handle environments where synthetic keyboard input (`Ctrl+S`) does not commit Access form records:
 
-1. **Submit button click** — `click_submit()` locates and clicks the `btnSubmit` button via pywinauto `click_input()`. This exercises real UI button interaction.
-2. **COM fallback** — If the form is still dirty after the button click (e.g., the button's VBA/macro didn't fire), the driver sets `active_form.Dirty = False` via COM to force the record commit.
-3. **Keyboard save** — `save_record()` (used by `driver.save()`) sends `Ctrl+S`, then falls back to the same COM `Dirty = False` approach.
+1. **Submit button click** — `click_submit()` first tries pywinauto `click_input()`, then Win32 `PostMessage(BM_CLICK)` on the button handle, then `DoCmd.RunCommand(acCmdSaveRecord)` via COM.
+2. **COM fallback** — If the form is still dirty after the button action, the driver sets `active_form.Dirty = False` via COM to force the record commit.
+3. **Keyboard save** — `save_record()` (used by `driver.save()`) tries `Ctrl+S` via `send_keys`, then falls back to the same COM `Dirty = False` approach.
 
-This layering ensures tests pass on any architecture or session configuration while still exercising the full button-click UI path.
+This layering ensures tests pass on any architecture or session configuration while still exercising the most human-like path available.
 
 ## Keyboard probe
 
-On first test run, the `access_session` fixture performs a one-time probe: it types a known value into the `Phone` field of `CompanyEditor` and checks whether the control received it. The result is cached for the remainder of the session. If the probe fails (e.g., headless session), all UI tests skip with a diagnostic message.
+On first test run, the `access_session` fixture performs a one-time probe: it types a known value into the `Phone` field of `CompanyEditor` via the `AccessUiDriver` (which auto-selects PostMessage or SendInput) and checks whether the control received it. The result is cached for the remainder of the session. If the probe fails (e.g., headless session without any input path), all UI tests skip with a diagnostic message.
 
 ## Current test status
 
