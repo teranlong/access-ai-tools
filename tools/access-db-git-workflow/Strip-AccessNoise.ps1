@@ -1,32 +1,38 @@
 <#
 .SYNOPSIS
-    Strips noise from MS Access VCS exported text files.
+    v2 noise filter — works as a file processor AND as a git clean filter.
 
 .DESCRIPTION
-    Removes machine-specific, non-semantic content that MS Access VCS exports
-    but which differs between machines/sessions and pollutes Git diffs.
+    Two modes:
+    1. File mode:   -Path <dir>   processes files in place
+    2. Stream mode: -Stdin        reads stdin, writes stdout (for git clean filter)
 
-    Targets:
-    - PrtMip / PrtDevMode / PrtDevNames (printer blobs)
-    - NameMap binary data
-    - Checksum lines
-    - dbLongBinary sections (SummaryInfo, DocumentMap)
-    - DatasheetFont* resets
-    - Trailing whitespace
+    Stream mode enables automatic noise stripping on every git add:
+      git config filter.accessvcs.clean "powershell -NoProfile -File workflow/Strip-AccessNoise.ps1 -Stdin"
+      git config filter.accessvcs.smudge cat
+
+    .gitattributes:
+      source/**/*.txt filter=accessvcs
 
 .PARAMETER Path
     Path to a single file or directory to process recursively.
+
+.PARAMETER Stdin
+    Read from stdin, write to stdout. For use as a git clean filter.
 
 .PARAMETER WhatIf
     Show what would be changed without modifying files.
 #>
 [CmdletBinding(SupportsShouldProcess)]
 param(
-    [Parameter(Mandatory)]
+    [Parameter()]
     [string]$Path,
 
     [Parameter()]
-    [string]$ConfigPath
+    [string]$ConfigPath,
+
+    [Parameter()]
+    [switch]$Stdin
 )
 
 $ErrorActionPreference = 'Stop'
@@ -142,9 +148,8 @@ function Process-File {
 
     if ($original -ne $new) {
         if ($PSCmdlet.ShouldProcess($FilePath, "Strip noise")) {
-            Set-Content -Path $FilePath -Value $cleaned -Encoding UTF8 -NoNewline
-            # Add final newline
-            Add-Content -Path $FilePath -Value "" -Encoding UTF8 -NoNewline
+            $output = ($cleaned -join "`r`n") + "`r`n"
+            [System.IO.File]::WriteAllText($FilePath, $output, [System.Text.UTF8Encoding]::new($false))
             Write-Host "  Cleaned: $FilePath" -ForegroundColor Green
             return $true
         }
@@ -152,7 +157,23 @@ function Process-File {
     return $false
 }
 
-# Main execution
+# ── Stream mode (git clean filter) ────────────────────────────
+if ($Stdin) {
+    $lines = @()
+    while ($null -ne ($line = [Console]::In.ReadLine())) {
+        $lines += $line
+    }
+    $cleaned = Strip-NoiseFromContent -Lines $lines
+    [Console]::Out.Write(($cleaned -join "`n") + "`n")
+    exit 0
+}
+
+# ── File mode (batch processing) ─────────────────────────────
+if (-not $Path) {
+    Write-Error "Provide -Path <directory|file> or -Stdin for git clean filter mode."
+    exit 1
+}
+
 $targetPath = Resolve-Path $Path -ErrorAction Stop
 
 if (Test-Path $targetPath -PathType Container) {
