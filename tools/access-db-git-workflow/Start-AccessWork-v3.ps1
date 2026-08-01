@@ -30,10 +30,11 @@ $ErrorActionPreference = 'Stop'
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 
 if (-not $RepoRoot) { $RepoRoot = Split-Path -Parent $scriptDir }
+$RepoRoot = [System.IO.Path]::GetFullPath($RepoRoot)
 
 $configPath = Join-Path $scriptDir 'config.json'
 $config = Get-Content $configPath -Raw | ConvertFrom-Json
-$vcsFolder = Join-Path $RepoRoot $config.vcsExportFolder
+$vcsFolder = [System.IO.Path]::GetFullPath((Join-Path $RepoRoot $config.vcsExportFolder))
 $accessDb = Join-Path $RepoRoot $config.accessDbPath
 $noiseDir = Join-Path $RepoRoot '.noise-baseline'
 $remote = $config.remoteName

@@ -1,56 +1,139 @@
-# Access Database Git Workflow
+# Access Database Git Workflow (v3 — Round-Trip Baseline)
 
-A foolproof two-click workflow for collaborating on Microsoft Access databases via Git.
+A foolproof, two-click methodology for collaborating on Microsoft Access databases via Git.
 
 ## The Problem
 
-When multiple people use MS Access VCS to convert databases between binary (.accdb) and
-text-based source control formats, the export generates substantial noise — especially in
-forms (printer settings, GUIDs, checksums, binary blobs). This noise pollutes diffs and
-causes merge conflicts that have nothing to do with actual changes.
+When you export an Access database with MSAccessVCS, it generates massive noise:
+- Printer settings (PrtMip, PrtDevMode, PrtDevNames)
+- Binary blobs (NameMap, SummaryInfo, DocumentMap)
+- Checksums (recalculated every export)
+- Font/display properties (DatasheetFontHeight, etc.)
 
-## The Solution
+This noise pollutes Git diffs, causes false merge conflicts, and makes collaboration impossible.
 
-Two desktop icons. Two operations. Everything else is automated.
+## The Solution: Round-Trip Baseline Comparison
 
-| Icon | Script | What It Does |
-|------|--------|--------------|
-| 🟢 **Start Working** | `Start-AccessWork.ps1` | Pulls latest from Git → strips noise → builds .accdb via VCS |
-| 🔴 **Save & Share** | `Save-AccessWork.ps1` | Exports from .accdb → strips noise → commits only real changes → pushes |
+Instead of pattern-matching noise (brittle), we **capture it empirically**:
 
-### Noise Stripping
+```
+START:  Import → Export → Save export as .noise-baseline/ → Restore clean
+SAVE:   Export → Compare against baseline → Discard identical files → Commit different ones
+```
 
-The `Strip-AccessNoise.ps1` filter automatically removes:
-- `PrtMip`, `PrtDevMode`, `PrtDevNames` (printer settings — differ per machine)
-- `NameMap` binary blobs
-- `dbLongBinary "SummaryInfo"` / `"DocumentMap"` sections
-- `Checksum` values that regenerate on every export
-- Trailing whitespace and CRLF normalization inconsistencies
-- `GUID` fields that regenerate without meaningful change
-- `DatasheetFontHeight`, `DatasheetFontWeight` resets
+**Why this works**: Noise is the same on both exports (same machine, same printer). So `user_export - baseline_export = real_changes_only`.
 
-### Git Attributes
+## Quick Start
 
-A `.gitattributes` file forces consistent line endings and marks binary files so Git
-never tries to diff them.
+### 1. Setup a new project
 
-## Setup
+```powershell
+.\Setup-Project.ps1 -ProjectPath "C:\Projects\MyAccessApp" -AccessDbName "MyApp.accdb" -GitRemote "https://github.com/your-org/your-repo.git"
+```
 
-1. Copy this folder to your Access database project root (next to your `.accdb` file)
-2. Run `Setup-Shortcuts.ps1` — creates desktop icons for Start/Save
-3. Configure `config.json` with your project paths
+This creates:
+- `workflow/` folder with all scripts
+- `.gitignore` and `.gitattributes`
+- Desktop shortcuts: **▶ START** and **💾 SAVE**
+
+### 2. Daily workflow
+
+| Step | Action | What happens |
+|------|--------|-------------|
+| 1 | Double-click **▶ START** | Pulls latest, builds .accdb, captures noise baseline, opens Access |
+| 2 | Work in Access | Make your changes (forms, queries, modules, etc.) |
+| 3 | Close Access | — |
+| 4 | Double-click **💾 SAVE** | Exports, filters noise, shows what changed, commits & pushes |
+
+That's it. No Git knowledge required.
+
+## How It Works (Technical Details)
+
+### Defense in Depth (3 layers)
+
+1. **Round-trip baseline** (primary) — Discards entire files that are identical to the noise baseline
+2. **Strip filter** (secondary) — Removes known noise patterns from files with real changes
+3. **Validation** (optional) — Classifies remaining diff lines as known-good or suspicious
+
+### Why this beats regex-only approaches
+
+| Problem | Regex approach | Round-trip baseline |
+|---------|---------------|-------------------|
+| Unknown noise pattern | Misses it | **Auto-handled** (same in both exports) |
+| Access version update | Must update patterns | **Just works** |
+| Different printers per machine | Need all printer regexes | **Just works** (captured per-machine) |
+| Corruption risk | Regex could mangle content | **Zero** (only keep/discard whole files) |
+| False positives | Could strip real content | **Impossible** (never modifies content) |
+
+### The one limitation
+
+If Access VCS generates **non-deterministic** content between exports (e.g., random timestamps), those files would be flagged as "real changes." In practice, Access VCS noise IS deterministic per machine/session.
+
+## File Structure
+
+```
+your-project/
+├── MyApp.accdb          ← Binary DB (gitignored)
+├── source/              ← MSAccessVCS text exports (tracked in Git)
+│   ├── forms/
+│   ├── modules/
+│   ├── queries/
+│   └── tables/
+├── workflow/
+│   ├── config.json      ← Project config (paths, options)
+│   ├── Start-AccessWork-v3.ps1
+│   ├── Save-AccessWork-v3.ps1
+│   └── Strip-AccessNoise.ps1
+├── .noise-baseline/     ← Captured noise (gitignored)
+├── .gitignore
+└── .gitattributes
+```
+
+## Configuration
+
+Edit `workflow/config.json`:
+
+```json
+{
+  "accessDbPath": "MyApp.accdb",
+  "vcsExportFolder": "source",
+  "branch": "main",
+  "remoteName": "origin",
+  "noiseFilter": {
+    "stripPrinterSettings": true,
+    "stripNameMap": true,
+    "stripChecksums": true,
+    "stripSummaryInfo": true,
+    "stripDatasheetFont": true
+  },
+  "git": {
+    "pushAfterCommit": true
+  }
+}
+```
+
+## Multi-Developer Setup
+
+Each developer:
+1. Clones the repo
+2. Runs `Setup-Project.ps1` (or copies the workflow/ folder)
+3. Uses their own desktop shortcuts
+
+The noise baseline is per-machine (gitignored), so each developer captures their own machine's noise independently.
+
+## Testing
+
+Run the end-to-end test suite (no Access required):
+
+```powershell
+.\tests\Run-E2ETest-v3.ps1
+```
+
+Covers: pure noise, real changes + noise, new files, deletions, multi-developer simulation, idempotency, and scale (10 forms / 1 real change).
 
 ## Requirements
 
-- [MSAccessVCS](https://github.com/joyfullservice/msaccess-vcs-addin) installed in Access
+- PowerShell 5.1+ (Windows built-in)
 - Git for Windows
-- PowerShell 5.1+
-- Microsoft Access
-
-## Success Criteria
-
-Multiple developers can independently:
-1. Click **Start Working** → get a clean .accdb with latest team changes
-2. Make changes in Access (forms, queries, modules, etc.)
-3. Click **Save & Share** → only meaningful changes are committed and pushed
-4. No merge conflicts from noise. No manual Git operations required.
+- MSAccessVCS add-in (for actual Access import/export)
+- Microsoft Access (for actual development)
