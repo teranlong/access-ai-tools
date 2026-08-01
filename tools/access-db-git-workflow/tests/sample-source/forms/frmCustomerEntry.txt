@@ -1,0 +1,149 @@
+Version =21
+VersionRequired =20
+Begin Form
+    RecordSelectors = NotDefault
+    AutoCenter = NotDefault
+    NavigationButtons = NotDefault
+    AllowDesignChanges = NotDefault
+    DefaultView =0
+    PictureAlignment =2
+    DatasheetGridlinesBehavior =3
+    GridX =24
+    GridY =24
+    Width =9360
+    DatasheetFontHeight =11
+    ItemSuffix =45
+    Left =735
+    Top =1815
+    Right =10110
+    Bottom =8625
+    DatasheetGridlinesColor =14806254
+    RecSrcDt = Begin
+        0x73e2b06482cce440
+    End
+    RecordSource ="tblCustomers"
+    Caption ="Customer Entry Form"
+    DatasheetFontName ="Calibri"
+    PrtMip = Begin
+        0xa0050000a0050000a0050000a00500000000000000000000000000000000
+        0x0000000000000000000000000000000000000000000000000000000000000000
+        0x0000000000000000000000000000000000000000000000000000000000000000
+        0x000000000000000000000000
+    End
+    PrtDevMode = Begin
+        0x0000000000000000000000000000000000000000000000000000000000000000
+        0x0000000000000000000000000000000000000000000000000000000000000000
+        0x0000000000000000000000000000000000000000000000000000000000000000
+        0x0000000000000000000000000000000000000000000000000000000000000000
+        0x4d006900630072006f0073006f0066007400200050007200690000000000000000
+        0x0100040003000000000000000000000000000000000000000000000000000000
+    End
+    PrtDevNames = Begin
+        0x0800180038000100000000004d006900630072006f0073006f00660074002000
+        0x5000720069006e007400200074006f002000500044004600000000004d006900
+        0x630072006f0073006f006600740020005000720069006e007400200074006f00
+        0x200050004400460000000000
+    End
+    FilterOnLoad =0
+    DatasheetFontWeight =400
+    Begin
+        Begin Label
+            OverlapFlags =85
+            Left =360
+            Top =360
+            Width =3000
+            Height =600
+            FontSize =14
+            FontWeight =700
+            ForeColor =4210752
+            Name ="lblTitle"
+            Caption ="Customer Entry"
+        End
+        Begin TextBox
+            OverlapFlags =85
+            IMESentenceMode =3
+            Left =360
+            Top =1200
+            Width =4500
+            Height =360
+            TabIndex =0
+            Name ="txtCustomerName"
+            ControlSource ="CustomerName"
+            Begin
+                Begin Label
+                    OverlapFlags =85
+                    Left =360
+                    Top =960
+                    Width =1800
+                    Height =240
+                    Name ="lblCustomerName"
+                    Caption ="Customer Name:"
+                End
+            End
+        End
+        Begin TextBox
+            OverlapFlags =85
+            IMESentenceMode =3
+            Left =360
+            Top =2000
+            Width =4500
+            Height =360
+            TabIndex =1
+            Name ="txtEmail"
+            ControlSource ="Email"
+            Begin
+                Begin Label
+                    OverlapFlags =85
+                    Left =360
+                    Top =1760
+                    Width =1800
+                    Height =240
+                    Name ="lblEmail"
+                    Caption ="Email Address:"
+                End
+            End
+        End
+        Begin TextBox
+            OverlapFlags =85
+            IMESentenceMode =3
+            Left =360
+            Top =2800
+            Width =4500
+            Height =360
+            TabIndex =2
+            Name ="txtPhone"
+            ControlSource ="Phone"
+            Begin
+                Begin Label
+                    OverlapFlags =85
+                    Left =360
+                    Top =2560
+                    Width =1800
+                    Height =240
+                    Name ="lblPhone"
+                    Caption ="Phone:"
+                End
+            End
+        End
+        Begin CommandButton
+            OverlapFlags =85
+            Left =360
+            Top =3600
+            Width =2000
+            Height =450
+            TabIndex =3
+            Name ="cmdSave"
+            Caption ="Save Record"
+            OnClick ="[Event Procedure]"
+        End
+    End
+End
+Checksum =-1234567890
+NameMap = Begin
+    0x0000000000000000000000000000000000000000000000000000000000000000
+    0x0000000000000000000000000000000000000000000000000000000000000000
+    0x7400780074004300750073007400
+End
+dbLongBinary "SummaryInfo" = Begin
+    0x0000000000000000000000000000000000000000000000000000000000000000
+End

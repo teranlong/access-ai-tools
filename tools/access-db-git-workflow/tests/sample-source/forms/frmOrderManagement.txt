@@ -1,0 +1,154 @@
+Version =21
+VersionRequired =20
+Begin Form
+    RecordSelectors = NotDefault
+    AutoCenter = NotDefault
+    NavigationButtons = NotDefault
+    DefaultView =0
+    PictureAlignment =2
+    DatasheetGridlinesBehavior =3
+    GridX =24
+    GridY =24
+    Width =12000
+    DatasheetFontHeight =11
+    ItemSuffix =78
+    Left =300
+    Top =300
+    Right =12300
+    Bottom =9000
+    DatasheetGridlinesColor =14806254
+    RecSrcDt = Begin
+        0x73e2b06482cce440
+    End
+    RecordSource ="tblOrders"
+    Caption ="Order Management"
+    DatasheetFontName ="Calibri"
+    PrtMip = Begin
+        0xa0050000a0050000a0050000a00500000000000000000000000000000000
+        0x0000000000000000000000000000000000000000000000000000000000000000
+        0x000000000000000000000000
+    End
+    PrtDevMode = Begin
+        0x0000000000000000000000000000000000000000000000000000000000000000
+        0x0000000000000000000000000000000000000000000000000000000000000000
+        0x0000000000000000000000000000000000000000000000000000000000000000
+        0x4800500020004c0061007300650072004a006500740020004d0046005000000000
+        0x0100040003000000000000000000000000000000000000000000000000000000
+    End
+    PrtDevNames = Begin
+        0x0800180038000100000000004800500020004c006100730065007200000000
+        0x4a006500740020004d00460050000000000000000000000000000000000000
+    End
+    FilterOnLoad =0
+    DatasheetFontWeight =400
+    Begin
+        Begin Label
+            OverlapFlags =85
+            Left =360
+            Top =360
+            Width =4000
+            Height =600
+            FontSize =14
+            FontWeight =700
+            ForeColor =4210752
+            Name ="lblTitle"
+            Caption ="Order Management"
+        End
+        Begin TextBox
+            OverlapFlags =85
+            IMESentenceMode =3
+            Left =360
+            Top =1200
+            Width =3000
+            Height =360
+            TabIndex =0
+            Name ="txtOrderID"
+            ControlSource ="OrderID"
+        End
+        Begin TextBox
+            OverlapFlags =85
+            IMESentenceMode =3
+            Left =360
+            Top =2000
+            Width =4500
+            Height =360
+            TabIndex =1
+            Name ="txtOrderDate"
+            ControlSource ="OrderDate"
+            Format ="Short Date"
+        End
+        Begin TextBox
+            OverlapFlags =85
+            IMESentenceMode =3
+            Left =360
+            Top =2800
+            Width =3000
+            Height =360
+            TabIndex =2
+            Name ="txtAmount"
+            ControlSource ="TotalAmount"
+            Format ="Currency"
+        End
+        Begin ComboBox
+            OverlapFlags =85
+            IMESentenceMode =3
+            Left =360
+            Top =3600
+            Width =4500
+            Height =360
+            TabIndex =3
+            Name ="cboCustomer"
+            ControlSource ="CustomerID"
+            RowSourceType ="Table/Query"
+            RowSource ="SELECT CustomerID, CustomerName FROM tblCustomers ORDER BY CustomerName"
+            ColumnCount =2
+            ColumnWidths ="0;3000"
+            BoundColumn =1
+        End
+        Begin SubForm
+            OverlapFlags =85
+            Left =360
+            Top =4500
+            Width =11000
+            Height =3000
+            TabIndex =4
+            Name ="subfrmOrderDetails"
+            SourceObject ="frmOrderDetails"
+            LinkChildFields ="OrderID"
+            LinkMasterFields ="OrderID"
+        End
+        Begin CommandButton
+            OverlapFlags =85
+            Left =360
+            Top =8000
+            Width =2000
+            Height =450
+            TabIndex =5
+            Name ="cmdNewOrder"
+            Caption ="New Order"
+            OnClick ="[Event Procedure]"
+        End
+        Begin CommandButton
+            OverlapFlags =85
+            Left =2700
+            Top =8000
+            Width =2000
+            Height =450
+            TabIndex =6
+            Name ="cmdDeleteOrder"
+            Caption ="Delete Order"
+            OnClick ="[Event Procedure]"
+        End
+    End
+End
+Checksum =987654321
+NameMap = Begin
+    0x0000000000000000000000000000000000000000000000000000000000000000
+    0x0000000000000000000000000000000000000000000000000000000000000000
+    0x0000000000000000000000000000000000000000000000000000000000000000
+    0x63006200
+End
+dbLongBinary "SummaryInfo" = Begin
+    0x0000000000000000000000000000000000000000000000000000000000000000
+    0x0000000000000000000000000000000000000000000000000000000000000000
+End
