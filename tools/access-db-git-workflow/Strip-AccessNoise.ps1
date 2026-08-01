@@ -142,9 +142,8 @@ function Process-File {
 
     if ($original -ne $new) {
         if ($PSCmdlet.ShouldProcess($FilePath, "Strip noise")) {
-            Set-Content -Path $FilePath -Value $cleaned -Encoding UTF8 -NoNewline
-            # Add final newline
-            Add-Content -Path $FilePath -Value "" -Encoding UTF8 -NoNewline
+            $output = ($cleaned -join "`r`n") + "`r`n"
+            [System.IO.File]::WriteAllText($FilePath, $output, [System.Text.UTF8Encoding]::new($false))
             Write-Host "  Cleaned: $FilePath" -ForegroundColor Green
             return $true
         }
